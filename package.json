@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
+    "network": "hardhat node",
     "compile": "hardhat compile",
     "test": "hardhat test",
     "format": "prettier --write ."
