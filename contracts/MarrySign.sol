@@ -8,6 +8,8 @@ pragma solidity ^0.8.9;
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
 contract MarrySign {
+    uint8 public constant SERVICE_FEE_PERCENT = 10;
+
     address payable private owner;
 
     struct Agreement {
@@ -20,7 +22,7 @@ contract MarrySign {
         // @dev A penalty which the one pays for agreement termination.
         uint terminationCost;
         // @dev Agreement status.
-        uint status;
+        uint state;
         // @dev Create/update date in seconds from Unix epoch.
         uint updatedAt;
     }

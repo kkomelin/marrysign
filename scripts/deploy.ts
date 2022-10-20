@@ -2,7 +2,7 @@ import { ethers } from 'hardhat'
 
 async function main() {
   const MarrySignContract = await ethers.getContractFactory('MarrySign')
-  const deployingContract = await MarrySignContract.deploy('First message')
+  const deployingContract = await MarrySignContract.deploy()
 
   await deployingContract.deployed()
 
