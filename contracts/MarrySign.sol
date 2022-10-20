@@ -8,7 +8,7 @@ pragma solidity ^0.8.9;
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
 contract MarrySign {
-  uint8 public constant SERVICE_FEE_PERCENT = 10;
+  uint8 private constant SERVICE_FEE_PERCENT = 10;
 
   address payable private owner;
 
