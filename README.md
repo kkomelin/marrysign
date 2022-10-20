@@ -1,13 +1,33 @@
-# Sample Hardhat Project
+# MarrySign 
+MarrySign app allows a couple to give their marital vows to each other digitally.
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This repository contains the Blockchain part of the project.
 
-Try running some of the following tasks:
+It's aimed to be run on an Ethereum-compatible network.
+
+## Test
+
+Run automated tests:
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+npm run test
+```
+
+Run automated tests and estimate Gas consumption:
+
+```shell
+npm run test:gas
+```
+
+## Run test network
+
+```shell
+npm run network:run
+```
+
+## Deploy the contract to the test network
+
+```shell
+npm run contract:compile
+npm run contract:deploy
 ```
