@@ -6,7 +6,9 @@ async function main() {
 
   await deployingContract.deployed()
 
-  console.log(`MarrySign contract has been deployed to ${deployingContract.address}`)
+  console.log(
+    `MarrySign contract has been deployed to ${deployingContract.address}`
+  )
 }
 
 main()

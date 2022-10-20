@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
-    "network": "hardhat node",
-    "compile": "hardhat compile",
+    "network:run": "hardhat node",
+    "contract:compile": "hardhat compile",
+    "contract:deploy": "hardhat run scripts/deploy.ts",
     "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
     "format": "prettier --write ."
   },
   "devDependencies": {
