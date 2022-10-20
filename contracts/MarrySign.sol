@@ -14,7 +14,8 @@ contract MarrySign {
 
   enum AgreementState {
     Created,
-    Accepted
+    Accepted,
+    Refused
   }
 
   struct Agreement {
@@ -37,14 +38,19 @@ contract MarrySign {
 
   /**
    * @notice Is emitted when a new agreement is created.
-   * @param index {unit} The newly-created agreement index.
+   * @param index {unit256} The newly-created agreement index.
    */
   event AgreementCreated(uint256 index);
   /**
    * @notice Is emitted when the agreement is accepted by the second party (Bob).
-   * @param index {unit} The accepted agreement index.
+   * @param index {unit256} The accepted agreement index.
    */
   event AgreementAccepted(uint256 index);
+  /**
+   * @notice Is emitted when the agreement is refused by any party.
+   * @param index {unit256} The refused agreement index.
+   */
+  event AgreementRefused(uint256 index);
 
   /**
    * @notice Contract constructor.
@@ -77,7 +83,7 @@ contract MarrySign {
    * @param bob {address} The second party's adddress.
    * @param content {bytes} The vow content.
    * @param terminationCost {uint256} The agreement termination cost.
-   * @param createdAt {uint256} The creation date in seconds from the Unix epoch.
+   * @param createdAt {uint256} The creation date in seconds since the Unix epoch.
    */
   function createAgreement(
     address bob,
@@ -107,7 +113,7 @@ contract MarrySign {
   /*
    * @notice Accept the agreement by the second party (Bob).
    * @param index {uint256} The agreement index.
-   * @param acceptedAt {uint256} The acceptance date in seconds from the Unix epoch.
+   * @param acceptedAt {uint256} The acceptance date in seconds since the Unix epoch.
    */
   function acceptAgreement(uint256 index, uint256 acceptedAt)
     public
@@ -120,6 +126,28 @@ contract MarrySign {
     agreements[index].updatedAt = acceptedAt;
 
     emit AgreementAccepted(index);
+  }
+
+  /*
+   * @notice Refuse an agreement by either Alice or Bob.
+   * @param index {uint256} The agreement index.
+   * @param acceptedAt {uint256} The refusal date in seconds since the Unix epoch.
+   */
+  function refuseAgreement(uint256 index, uint256 refusedAt)
+    public
+    validTimestamp(refusedAt)
+  {
+    require(index < getAgreementCount(), 'Index is out of range');
+    require(
+      agreements[index].bob == msg.sender ||
+        agreements[index].alice == msg.sender,
+      'Not allowed'
+    );
+
+    agreements[index].state = AgreementState.Refused;
+    agreements[index].updatedAt = refusedAt;
+
+    emit AgreementRefused(index);
   }
 
   modifier validTimestamp(uint256 timestamp) {
