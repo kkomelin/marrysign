@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 
-export const _deployMarrySignContractFixture = async () => {
+export const deployMarrySignContractFixture = async () => {
   // Contracts are deployed using the first signer/account by default.
   const [owner, alice, bob] = await ethers.getSigners()
 

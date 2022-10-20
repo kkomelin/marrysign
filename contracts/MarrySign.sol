@@ -13,7 +13,8 @@ contract MarrySign {
   address payable private owner;
 
   enum AgreementState {
-    Created
+    Created,
+    Accepted
   }
 
   struct Agreement {
@@ -38,7 +39,12 @@ contract MarrySign {
    * @notice Is emitted when a new agreement is created.
    * @param index {unit} The newly-created agreement index.
    */
-  event Created(uint256 index);
+  event AgreementCreated(uint256 index);
+  /**
+   * @notice Is emitted when the agreement is accepted by the second party (Bob).
+   * @param index {unit} The accepted agreement index.
+   */
+  event AgreementAccepted(uint256 index);
 
   /**
    * @notice Contract constructor.
@@ -49,7 +55,7 @@ contract MarrySign {
 
   /**
    * @notice Get the number of all created agreements.
-   * @return {uint}
+   * @return {uint256}
    */
   function getAgreementCount() public view returns (uint256) {
     return agreements.length;
@@ -57,11 +63,11 @@ contract MarrySign {
 
   /**
    * @notice Get an agreement.
-   * @param index {uint} Agreement array index.
+   * @param index {uint256} Agreement array index.
    * @return {Agreement}
    */
   function getAgreement(uint256 index) public view returns (Agreement memory) {
-    require(index <= getAgreementCount(), 'Index out of range');
+    require(index <= getAgreementCount(), 'Index is out of range');
 
     return agreements[index];
   }
@@ -70,8 +76,8 @@ contract MarrySign {
    * @notice Create a new agreement.
    * @param bob {address} The second party's adddress.
    * @param content {bytes} The vow content.
-   * @param terminationCost {uint} The agreement termination cost.
-   * @param createdAt {uint} The creation date in seconds from the Unix epoch.
+   * @param terminationCost {uint256} The agreement termination cost.
+   * @param createdAt {uint256} The creation date in seconds from the Unix epoch.
    */
   function createAgreement(
     address bob,
@@ -95,7 +101,25 @@ contract MarrySign {
 
     agreements.push(agreement);
 
-    emit Created(getAgreementCount() - 1);
+    emit AgreementCreated(getAgreementCount() - 1);
+  }
+
+  /*
+   * @notice Accept the agreement by the second party (Bob).
+   * @param index {uint256} The agreement index.
+   * @param acceptedAt {uint256} The acceptance date in seconds from the Unix epoch.
+   */
+  function acceptAgreement(uint256 index, uint256 acceptedAt)
+    public
+    validTimestamp(acceptedAt)
+  {
+    require(index < getAgreementCount(), 'Index is out of range');
+    require(msg.sender == agreements[index].bob, 'Not allowed');
+
+    agreements[index].state = AgreementState.Accepted;
+    agreements[index].updatedAt = acceptedAt;
+
+    emit AgreementAccepted(index);
   }
 
   modifier validTimestamp(uint256 timestamp) {

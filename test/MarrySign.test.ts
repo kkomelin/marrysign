@@ -2,7 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { MarrySign } from '../typechain'
-import { _deployMarrySignContractFixture } from './utils/fixtures'
+import { deployMarrySignContractFixture } from './utils/fixtures'
 import { nowTimestamp, stringToHex } from './utils/helpers'
 
 describe('MarrySign', () => {
@@ -16,12 +16,12 @@ describe('MarrySign', () => {
   //   terminationCost / contract.callStatic.SERVICE_FEE_PERCENT
 
   beforeEach(async () => {
-    const fixtureResults = await loadFixture(_deployMarrySignContractFixture)
+    const fixtureResults = await loadFixture(deployMarrySignContractFixture)
 
     contract = fixtureResults.contract
     owner = fixtureResults.owner
     alice = fixtureResults.alice
-    bob = fixtureResults.alice
+    bob = fixtureResults.bob
 
     return fixtureResults
   })
@@ -46,7 +46,7 @@ describe('MarrySign', () => {
         .connect(alice)
         .createAgreement(bob.address, content, terminationCost, createdAt)
     )
-      .to.emit(contract, 'Created')
+      .to.emit(contract, 'AgreementCreated')
       .withArgs(captureIndex)
 
     const agreement = await contract.callStatic.getAgreement(0)
@@ -64,7 +64,7 @@ describe('MarrySign', () => {
   describe('Contract Deployment', () => {
     it('Should revert if the index is out of range', async () => {
       await expect(contract.getAgreement(100)).to.be.revertedWith(
-        'Index out of range'
+        'Index is out of range'
       )
     })
   })
@@ -118,6 +118,43 @@ describe('MarrySign', () => {
 
       const count = await contract.callStatic.getAgreementCount()
       expect(count).to.be.equal(2)
+    })
+  })
+
+  describe('Agreement Acceptance', () => {
+    it('Bob should accept an agreement', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      const acceptedAt = nowTimestamp()
+
+      await expect(contract.connect(bob).acceptAgreement(index, acceptedAt))
+        .to.emit(contract, 'AgreementAccepted')
+        .withArgs(index)
+
+      const agreement = await contract.callStatic.getAgreement(index)
+      expect(agreement.state).to.be.equal(1)
+      expect(agreement.updatedAt).to.be.equal(acceptedAt)
+    })
+
+    it('Should revert if Alice tries to accept an agreement', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      const acceptedAt = nowTimestamp()
+
+      await expect(
+        contract.connect(alice).acceptAgreement(index, acceptedAt)
+      ).to.be.revertedWith('Not allowed')
+    })
+
+    it('Should revert if the passwed index is out of range', async () => {
+      const index = 100
+      const acceptedAt = nowTimestamp()
+
+      await expect(
+        contract.connect(bob).acceptAgreement(index, acceptedAt)
+      ).to.be.revertedWith('Index is out of range')
     })
   })
 })
