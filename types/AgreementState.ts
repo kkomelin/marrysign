@@ -5,5 +5,6 @@
 export enum AgreementState {
   Created,
   Accepted,
-  Refused
+  Refused,
+  Terminated
 }

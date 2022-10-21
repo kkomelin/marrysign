@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
@@ -15,7 +12,8 @@ contract MarrySign {
   enum AgreementState {
     Created,
     Accepted,
-    Refused
+    Refused,
+    Terminated
   }
 
   struct Agreement {
@@ -51,6 +49,11 @@ contract MarrySign {
    * @param index {unit256} The refused agreement index.
    */
   event AgreementRefused(uint256 index);
+  /**
+   * @notice Is emitted when the agreement is terminated by any party.
+   * @param index {unit256} The terminated agreement index.
+   */
+  event AgreementTerminated(uint256 index);
 
   /**
    * @notice Contract constructor.
@@ -91,7 +94,6 @@ contract MarrySign {
     uint256 terminationCost,
     uint256 createdAt
   ) public validTimestamp(createdAt) {
-    // @todo: Validate the createdAt timestamp.
     require(content.length != 0, 'Content cannot be empty');
     require(bob != address(0), "Bob's address is not set");
     require(terminationCost != 0, 'Termination cost is not set');
@@ -148,6 +150,46 @@ contract MarrySign {
     agreements[index].updatedAt = refusedAt;
 
     emit AgreementRefused(index);
+  }
+
+  /*
+   * @notice Terminate an agreement by either either Alice or Bob (involves paying compensation and service fee).
+   * @param index {uint256} The agreement index.
+   */
+  function terminateAgreement(uint256 index) public payable {
+    require(index < getAgreementCount(), 'Index is out of range');
+    require(
+      agreements[index].bob == msg.sender ||
+        agreements[index].alice == msg.sender,
+      'Not allowed'
+    );
+
+    // Make sure the requested compensation matches that which is stated in the agreement.
+    require(
+      msg.value == agreements[index].terminationCost,
+      'The terminating party must pay the exact termination cost'
+    );
+
+    // Deduct our service fee.
+    uint256 fee = (msg.value * SERVICE_FEE_PERCENT) / 100;
+    if (fee != 0) {
+      owner.transfer(fee);
+    }
+
+    uint256 compensation = msg.value - fee;
+    if (agreements[index].alice == msg.sender) {
+      // Alice pays Bob the compensation.
+      payable(agreements[index].bob).transfer(compensation);
+    } else {
+      // Bob pays Alice the compensation.
+      payable(agreements[index].alice).transfer(compensation);
+    }
+
+    // agreements[index].state = State.Terminated;
+
+    delete agreements[index];
+
+    emit AgreementTerminated(index);
   }
 
   modifier validTimestamp(uint256 timestamp) {
