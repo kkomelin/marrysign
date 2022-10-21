@@ -2,6 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { MarrySign } from '../typechain'
+import { AgreementEventName } from '../types/AgreementEventName'
 import { AgreementState } from '../types/AgreementState'
 import { deployMarrySignContractFixture } from './utils/fixtures'
 import { nowTimestamp, stringToHex } from './utils/helpers'
@@ -47,7 +48,7 @@ describe('MarrySign', () => {
         .connect(alice)
         .createAgreement(bob.address, content, terminationCost, createdAt)
     )
-      .to.emit(contract, 'AgreementCreated')
+      .to.emit(contract, AgreementEventName.AgreementCreated)
       .withArgs(captureIndex)
 
     const agreement = await contract.callStatic.getAgreement(0)
@@ -129,7 +130,7 @@ describe('MarrySign', () => {
       const acceptedAt = nowTimestamp()
 
       await expect(contract.connect(bob).acceptAgreement(index, acceptedAt))
-        .to.emit(contract, 'AgreementAccepted')
+        .to.emit(contract, AgreementEventName.AgreementAccepted)
         .withArgs(index)
 
       const agreement = await contract.callStatic.getAgreement(index)
@@ -186,7 +187,7 @@ describe('MarrySign', () => {
       const refusedAt = nowTimestamp()
 
       await expect(contract.connect(bob).refuseAgreement(index, refusedAt))
-        .to.emit(contract, 'AgreementRefused')
+        .to.emit(contract, AgreementEventName.AgreementRefused)
         .withArgs(index)
 
       const agreement = await contract.callStatic.getAgreement(index)
@@ -201,7 +202,7 @@ describe('MarrySign', () => {
       const refusedAt = nowTimestamp()
 
       await expect(contract.connect(alice).refuseAgreement(index, refusedAt))
-        .to.emit(contract, 'AgreementRefused')
+        .to.emit(contract, AgreementEventName.AgreementRefused)
         .withArgs(index)
 
       const agreement = await contract.callStatic.getAgreement(index)
