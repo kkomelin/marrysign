@@ -123,21 +123,6 @@ describe('MarrySign', () => {
   })
 
   describe('Agreement Acceptance', () => {
-    it('Bob should accept an agreement', async () => {
-      const index = await _createAgreement(contract, alice, bob)
-      expect(index).to.be.equal(0)
-
-      const acceptedAt = nowTimestamp()
-
-      await expect(contract.connect(bob).acceptAgreement(index, acceptedAt))
-        .to.emit(contract, AgreementEventName.AgreementAccepted)
-        .withArgs(index)
-
-      const agreement = await contract.callStatic.getAgreement(index)
-      expect(agreement.state).to.be.equal(AgreementState.Accepted)
-      expect(agreement.updatedAt).to.be.equal(acceptedAt)
-    })
-
     it('Should revert if Alice tries to accept an agreement', async () => {
       const index = await _createAgreement(contract, alice, bob)
       expect(index).to.be.equal(0)
@@ -157,6 +142,21 @@ describe('MarrySign', () => {
         contract.connect(bob).acceptAgreement(index, acceptedAt)
       ).to.be.revertedWith('Index is out of range')
     })
+
+    it('Bob should accept an agreement', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      const acceptedAt = nowTimestamp()
+
+      await expect(contract.connect(bob).acceptAgreement(index, acceptedAt))
+        .to.emit(contract, AgreementEventName.AgreementAccepted)
+        .withArgs(index)
+
+      const agreement = await contract.callStatic.getAgreement(index)
+      expect(agreement.state).to.be.equal(AgreementState.Accepted)
+      expect(agreement.updatedAt).to.be.equal(acceptedAt)
+    })
   })
 
   describe('Agreement Refusal', () => {
@@ -169,7 +169,7 @@ describe('MarrySign', () => {
       ).to.be.revertedWith('Index is out of range')
     })
 
-    it('Should revert if it is refused by nor Alice or Bob', async () => {
+    it('Should revert if it is refused by neither Alice or Bob', async () => {
       const index = await _createAgreement(contract, alice, bob)
       expect(index).to.be.equal(0)
 
@@ -209,5 +209,30 @@ describe('MarrySign', () => {
       expect(agreement.state).to.be.equal(2)
       expect(agreement.updatedAt).to.be.equal(refusedAt)
     })
+  })
+
+  describe('Agreement Termination', () => {
+    it('Should revert if it is terminated by neither Alice or Bob', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      await expect(
+        contract.connect(owner).terminateAgreement(index)
+      ).to.be.revertedWith('Not allowed')
+    })
+
+    it('Should revert if no payment is performed', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      await expect(
+        contract.connect(bob).terminateAgreement(index)
+      ).to.be.revertedWith(
+        'The terminating party must pay the exact termination cost'
+      )
+    })
+
+    // @todo Test termination by Bob.
+    // @todo Test termination by Alice.
   })
 })
