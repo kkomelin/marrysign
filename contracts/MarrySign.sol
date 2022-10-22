@@ -185,9 +185,11 @@ contract MarrySign {
       payable(agreements[index].alice).transfer(compensation);
     }
 
-    // agreements[index].state = State.Terminated;
-
+    // @todo Find a way to destroy the array element completely.
     delete agreements[index];
+    // We have to somehow distinguish the terminated agreement from active ones.
+    // That's because the array item deletion doesn't factually remove the element from the array.
+    agreements[index].state = AgreementState.Terminated;
 
     emit AgreementTerminated(index);
   }

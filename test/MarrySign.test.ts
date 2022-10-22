@@ -252,10 +252,9 @@ describe('MarrySign', () => {
           [-terminationCost, terminationCost - serviceFee, serviceFee]
         )
 
-      // @todo: Test that the agreement is deleted from the array.
-      // Need to delete it properly, so that the space is not allocated anymore.
-      // const agreement = await contract.callStatic.getAgreement(index)
-      // expect(agreement).to.be.equal(AgreementState.Terminated)
+      // @todo: When we find a way to delete the array element completely, update this check.
+      const agreement = await contract.callStatic.getAgreement(index)
+      expect(agreement.state).to.be.equal(AgreementState.Terminated)
     })
 
     it('Alice should be able to terminate an agreement with penalty', async () => {
@@ -274,10 +273,9 @@ describe('MarrySign', () => {
           [-terminationCost, terminationCost - serviceFee, serviceFee]
         )
 
-      // @todo: Test that the agreement is deleted from the array.
-      // Need to delete it properly, so that the space is not allocated anymore.
-      // const agreement = await contract.callStatic.getAgreement(index)
-      // expect(agreement).to.be.equal(AgreementState.Terminated)
+      // @todo: When we find a way to delete the array element completely, update this check.
+      const agreement = await contract.callStatic.getAgreement(index)
+      expect(agreement.state).to.be.equal(AgreementState.Terminated)
     })
   })
 })
