@@ -236,7 +236,7 @@ describe('MarrySign', () => {
       )
     })
 
-    it('Bob should terminate an agreement with penalty', async () => {
+    it('Bob should be able to terminate an agreement with penalty', async () => {
       const index = await _createAgreement(contract, alice, bob)
       expect(index).to.be.equal(0)
 
@@ -252,12 +252,32 @@ describe('MarrySign', () => {
           [-terminationCost, terminationCost - serviceFee, serviceFee]
         )
 
-      // @todo: Test that the agreement is deleted from the array. 
+      // @todo: Test that the agreement is deleted from the array.
       // Need to delete it properly, so that the space is not allocated anymore.
       // const agreement = await contract.callStatic.getAgreement(index)
       // expect(agreement).to.be.equal(AgreementState.Terminated)
     })
 
-    // @todo Test termination by Alice.
+    it('Alice should be able to terminate an agreement with penalty', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      await expect(
+        contract.connect(alice).terminateAgreement(index, {
+          value: terminationCost,
+        })
+      )
+        .to.emit(contract, 'AgreementTerminated')
+        .withArgs(index)
+        .to.changeEtherBalances(
+          [alice, bob, owner],
+          [-terminationCost, terminationCost - serviceFee, serviceFee]
+        )
+
+      // @todo: Test that the agreement is deleted from the array.
+      // Need to delete it properly, so that the space is not allocated anymore.
+      // const agreement = await contract.callStatic.getAgreement(index)
+      // expect(agreement).to.be.equal(AgreementState.Terminated)
+    })
   })
 })
