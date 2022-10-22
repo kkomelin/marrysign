@@ -245,7 +245,7 @@ describe('MarrySign', () => {
           value: terminationCost,
         })
       )
-        .to.emit(contract, 'AgreementTerminated')
+        .to.emit(contract, AgreementEventName.AgreementTerminated)
         .withArgs(index)
         .to.changeEtherBalances(
           [bob, alice, owner],
@@ -267,7 +267,7 @@ describe('MarrySign', () => {
           value: terminationCost,
         })
       )
-        .to.emit(contract, 'AgreementTerminated')
+        .to.emit(contract, AgreementEventName.AgreementTerminated)
         .withArgs(index)
         .to.changeEtherBalances(
           [alice, bob, owner],
