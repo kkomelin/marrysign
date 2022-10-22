@@ -7,3 +7,10 @@ export const stringToHex = (text: string): string => {
 export const nowTimestamp = (): number => {
   return Math.round(Date.now() / 1000)
 }
+
+export const terminationServiceFee = (
+  terminationCost: number,
+  serviceFeePercent: number
+): number => {
+  return (terminationCost * serviceFeePercent) / 100
+}

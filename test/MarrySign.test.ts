@@ -5,7 +5,11 @@ import { MarrySign } from '../typechain'
 import { AgreementEventName } from '../types/AgreementEventName'
 import { AgreementState } from '../types/AgreementState'
 import { deployMarrySignContractFixture } from './utils/fixtures'
-import { nowTimestamp, stringToHex } from './utils/helpers'
+import {
+  nowTimestamp,
+  stringToHex,
+  terminationServiceFee,
+} from './utils/helpers'
 
 describe('MarrySign', () => {
   let contract: MarrySign
@@ -14,8 +18,8 @@ describe('MarrySign', () => {
   let bob: SignerWithAddress
 
   const terminationCost = 1000000
-  // const terminationServiceFee =
-  //   terminationCost / contract.callStatic.SERVICE_FEE_PERCENT
+  const serviceFeePercent = 10 // Have to hardcode it here for now.
+  const serviceFee = terminationServiceFee(terminationCost, serviceFeePercent)
 
   beforeEach(async () => {
     const fixtureResults = await loadFixture(deployMarrySignContractFixture)
@@ -232,7 +236,28 @@ describe('MarrySign', () => {
       )
     })
 
-    // @todo Test termination by Bob.
+    it('Bob should terminate an agreement with penalty', async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      await expect(
+        contract.connect(bob).terminateAgreement(index, {
+          value: terminationCost,
+        })
+      )
+        .to.emit(contract, 'AgreementTerminated')
+        .withArgs(index)
+        .to.changeEtherBalances(
+          [bob, alice, owner],
+          [-terminationCost, terminationCost - serviceFee, serviceFee]
+        )
+
+      // @todo: Test that the agreement is deleted from the array. 
+      // Need to delete it properly, so that the space is not allocated anymore.
+      // const agreement = await contract.callStatic.getAgreement(index)
+      // expect(agreement).to.be.equal(AgreementState.Terminated)
+    })
+
     // @todo Test termination by Alice.
   })
 })
