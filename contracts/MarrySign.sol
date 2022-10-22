@@ -194,6 +194,17 @@ contract MarrySign {
     emit AgreementTerminated(index);
   }
 
+  /*
+   * @notice Transfer contract funds to the contract-owner (withdraw).
+   */
+  function withdraw() public onlyOwner {
+    owner.transfer(address(this).balance);
+  }
+
+  /**
+   * @notice Check the validity of the timespamp.
+   * @param timestamp {uint256} The timestamp being validated.
+   */
   modifier validTimestamp(uint256 timestamp) {
     require(
       timestamp != 0 &&
@@ -205,7 +216,7 @@ contract MarrySign {
   }
 
   /**
-   * @notice Check if the actor is the contract-owner.
+   * @notice Check if the caller is the contract-owner.
    */
   modifier onlyOwner() {
     require(msg.sender == owner, 'Caller is not an owner');

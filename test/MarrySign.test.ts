@@ -66,7 +66,7 @@ describe('MarrySign', () => {
     return capturedIndex
   }
 
-  describe('Contract Deployment', () => {
+  describe('Contract: Deployment', () => {
     it('Should revert if the index is out of range', async () => {
       await expect(contract.getAgreement(100)).to.be.revertedWith(
         'Index is out of range'
@@ -74,7 +74,7 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement Creation', () => {
+  describe('Agreement: Creation', () => {
     it('Should revert if parameters are invalid', async () => {
       let content = stringToHex('Test vow')
       let terminationCost = 100
@@ -126,7 +126,7 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement Acceptance', () => {
+  describe('Agreement: Acceptance', () => {
     it('Should revert if Alice tries to accept an agreement', async () => {
       const index = await _createAgreement(contract, alice, bob)
       expect(index).to.be.equal(0)
@@ -163,7 +163,7 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement Refusal', () => {
+  describe('Agreement: Refusal', () => {
     it('Should revert if the passed index is out of range', async () => {
       const index = 100
       const refusedAt = nowTimestamp()
@@ -215,7 +215,7 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement Termination', () => {
+  describe('Agreement: Termination', () => {
     it('Should revert if it is terminated by neither Alice or Bob', async () => {
       const index = await _createAgreement(contract, alice, bob)
       expect(index).to.be.equal(0)
@@ -276,6 +276,19 @@ describe('MarrySign', () => {
       // @todo: When we find a way to delete the array element completely, update this check.
       const agreement = await contract.callStatic.getAgreement(index)
       expect(agreement.state).to.be.equal(AgreementState.Terminated)
+    })
+  })
+
+  describe('Contract: Withdrawal', () => {
+    it('Should revert if called by not the owner', async () => {
+      await expect(contract.connect(alice).withdraw()).to.be.revertedWith(
+        'Caller is not an owner'
+      )
+    })
+
+    it('Should not revert if called by the owner', async () => {
+      await expect(contract.withdraw()).to.changeEtherBalances([owner], [0]).not
+        .to.be.reverted
     })
   })
 })
