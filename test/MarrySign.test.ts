@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { MarrySign } from '../typechain'
 import { AgreementEventName } from '../types/AgreementEventName'
 import { AgreementState } from '../types/AgreementState'
+import { ContractCustomError } from '../types/ContractCustomError'
 import { deployMarrySignContractFixture } from './utils/fixtures'
 import {
   nowTimestamp,
@@ -68,8 +69,9 @@ describe('MarrySign', () => {
 
   describe('Contract: Deployment', () => {
     it('Should revert if the index is out of range', async () => {
-      await expect(contract.getAgreement(100)).to.be.revertedWith(
-        'Index is out of range'
+      await expect(contract.getAgreement(100)).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.InvalidAgreementId
       )
     })
   })
@@ -84,7 +86,10 @@ describe('MarrySign', () => {
         contract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
-      ).to.be.rejectedWith('Invalid timestamp')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.InvalidTimestamp
+      )
 
       content = stringToHex('')
       terminationCost = 100
@@ -94,7 +99,10 @@ describe('MarrySign', () => {
         contract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
-      ).to.be.rejectedWith('Content cannot be empty')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.EmptyContent
+      )
 
       content = stringToHex('Test vow')
       terminationCost = 0
@@ -104,7 +112,10 @@ describe('MarrySign', () => {
         contract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
-      ).to.be.rejectedWith('Termination cost is not set')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.ZeroTerminationCost
+      )
     })
 
     it('Should create an agreement and emit event for correct parameters', async () => {
@@ -135,7 +146,10 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(alice).acceptAgreement(index, acceptedAt)
-      ).to.be.revertedWith('Not allowed')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.AccessDenied
+      )
     })
 
     it('Should revert if the passed index is out of range', async () => {
@@ -144,7 +158,10 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(bob).acceptAgreement(index, acceptedAt)
-      ).to.be.revertedWith('Index is out of range')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.InvalidAgreementId
+      )
     })
 
     it('Bob should accept an agreement', async () => {
@@ -170,7 +187,10 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(alice).refuseAgreement(index, refusedAt)
-      ).to.be.revertedWith('Index is out of range')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.InvalidAgreementId
+      )
     })
 
     it('Should revert if it is refused by neither Alice or Bob', async () => {
@@ -181,7 +201,10 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(owner).refuseAgreement(index, refuseAt)
-      ).to.be.revertedWith('Not allowed')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.AccessDenied
+      )
     })
 
     it('Bob should be able to refuse their agreement', async () => {
@@ -222,7 +245,10 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(owner).terminateAgreement(index)
-      ).to.be.revertedWith('Not allowed')
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.AccessDenied
+      )
     })
 
     it('Should revert if no payment is performed', async () => {
@@ -231,8 +257,9 @@ describe('MarrySign', () => {
 
       await expect(
         contract.connect(bob).terminateAgreement(index)
-      ).to.be.revertedWith(
-        'The terminating party must pay the exact termination cost'
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.MustPayExactTerminationCost
       )
     })
 
@@ -281,8 +308,11 @@ describe('MarrySign', () => {
 
   describe('Contract: Withdrawal', () => {
     it('Should revert if called by not the owner', async () => {
-      await expect(contract.connect(alice).withdraw()).to.be.revertedWith(
-        'Caller is not an owner'
+      await expect(
+        contract.connect(alice).withdraw()
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.CallerIsNotOwner
       )
     })
 

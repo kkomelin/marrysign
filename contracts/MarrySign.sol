@@ -5,10 +5,6 @@ pragma solidity ^0.8.9;
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
 contract MarrySign {
-  uint8 private constant SERVICE_FEE_PERCENT = 10;
-
-  address payable private owner;
-
   enum AgreementState {
     Created,
     Accepted,
@@ -31,8 +27,22 @@ contract MarrySign {
     uint256 updatedAt;
   }
 
-  // @dev List of all agreements created.
-  Agreement[] private agreements;
+  // @dev Some features are only available to the contract owner, e.g. withdrawal.
+  error CallerIsNotOwner();
+  // @dev Agreement.content cannot be empty.
+  error EmptyContent();
+  // @dev We don't allow zero termination cost.
+  error ZeroTerminationCost();
+  // @dev When Bob is not set.
+  error BobNotSpecified();
+  // @dev We use it to check Agreement's createdAt, updatedAt, etc. timestamps.
+  error InvalidTimestamp();
+  // @dev The passed agreement ID/index should be inside the array range.
+  error InvalidAgreementId();
+  // @dev When the caller is not authorized to call a function.
+  error AccessDenied();
+  // @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
+  error MustPayExactTerminationCost();
 
   /**
    * @notice Is emitted when a new agreement is created.
@@ -55,6 +65,13 @@ contract MarrySign {
    */
   event AgreementTerminated(uint256 index);
 
+  // @dev We charge this percent of the termination cost for our service.
+  uint8 private constant SERVICE_FEE_PERCENT = 10;
+  // @deve The contract owner.
+  address payable private owner;
+  // @dev List of all agreements created.
+  Agreement[] private agreements;
+
   /**
    * @notice Contract constructor.
    */
@@ -76,7 +93,9 @@ contract MarrySign {
    * @return {Agreement}
    */
   function getAgreement(uint256 index) public view returns (Agreement memory) {
-    require(index <= getAgreementCount(), 'Index is out of range');
+    if (index >= getAgreementCount()) {
+      revert InvalidAgreementId();
+    }
 
     return agreements[index];
   }
@@ -94,9 +113,15 @@ contract MarrySign {
     uint256 terminationCost,
     uint256 createdAt
   ) public validTimestamp(createdAt) {
-    require(content.length != 0, 'Content cannot be empty');
-    require(bob != address(0), "Bob's address is not set");
-    require(terminationCost != 0, 'Termination cost is not set');
+    if (content.length == 0) {
+      revert EmptyContent();
+    }
+    if (bob == address(0)) {
+      revert BobNotSpecified();
+    }
+    if (terminationCost == 0) {
+      revert ZeroTerminationCost();
+    }
 
     Agreement memory agreement = Agreement(
       msg.sender,
@@ -121,8 +146,12 @@ contract MarrySign {
     public
     validTimestamp(acceptedAt)
   {
-    require(index < getAgreementCount(), 'Index is out of range');
-    require(msg.sender == agreements[index].bob, 'Not allowed');
+    if (index >= getAgreementCount()) {
+      revert InvalidAgreementId();
+    }
+    if (msg.sender != agreements[index].bob) {
+      revert AccessDenied();
+    }
 
     agreements[index].state = AgreementState.Accepted;
     agreements[index].updatedAt = acceptedAt;
@@ -139,12 +168,15 @@ contract MarrySign {
     public
     validTimestamp(refusedAt)
   {
-    require(index < getAgreementCount(), 'Index is out of range');
-    require(
-      agreements[index].bob == msg.sender ||
-        agreements[index].alice == msg.sender,
-      'Not allowed'
-    );
+    if (index >= getAgreementCount()) {
+      revert InvalidAgreementId();
+    }
+    if (
+      agreements[index].bob != msg.sender &&
+      agreements[index].alice != msg.sender
+    ) {
+      revert AccessDenied();
+    }
 
     agreements[index].state = AgreementState.Refused;
     agreements[index].updatedAt = refusedAt;
@@ -157,18 +189,20 @@ contract MarrySign {
    * @param index {uint256} The agreement index.
    */
   function terminateAgreement(uint256 index) public payable {
-    require(index < getAgreementCount(), 'Index is out of range');
-    require(
-      agreements[index].bob == msg.sender ||
-        agreements[index].alice == msg.sender,
-      'Not allowed'
-    );
+    if (index >= getAgreementCount()) {
+      revert InvalidAgreementId();
+    }
+    if (
+      agreements[index].bob != msg.sender &&
+      agreements[index].alice != msg.sender
+    ) {
+      revert AccessDenied();
+    }
 
     // Make sure the requested compensation matches that which is stated in the agreement.
-    require(
-      msg.value == agreements[index].terminationCost,
-      'The terminating party must pay the exact termination cost'
-    );
+    if (msg.value != agreements[index].terminationCost) {
+      revert MustPayExactTerminationCost();
+    }
 
     // Deduct our service fee.
     uint256 fee = (msg.value * SERVICE_FEE_PERCENT) / 100;
@@ -206,20 +240,23 @@ contract MarrySign {
    * @param timestamp {uint256} The timestamp being validated.
    */
   modifier validTimestamp(uint256 timestamp) {
-    require(
-      timestamp != 0 &&
-        timestamp <= block.timestamp &&
-        timestamp >= block.timestamp - 86400,
-      'Invalid timestamp'
-    );
+    if (
+      timestamp == 0 ||
+      timestamp > block.timestamp ||
+      timestamp < block.timestamp - 86400
+    ) {
+      revert InvalidTimestamp();
+    }
     _;
   }
 
   /**
-   * @notice Check if the caller is the contract-owner.
+   * @notice Check whether the caller is the contract-owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner, 'Caller is not an owner');
+    if (msg.sender != owner) {
+      revert CallerIsNotOwner();
+    }
     _;
   }
 }
