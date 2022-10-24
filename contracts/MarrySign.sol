@@ -67,7 +67,7 @@ contract MarrySign {
 
   // @dev We charge this percent of the termination cost for our service.
   uint8 private constant SERVICE_FEE_PERCENT = 10;
-  // @deve The contract owner.
+  // @dev The contract owner.
   address payable private owner;
   // @dev List of all agreements created.
   Agreement[] private agreements;
