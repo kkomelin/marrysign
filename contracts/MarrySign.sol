@@ -101,6 +101,14 @@ contract MarrySign {
   }
 
   /**
+   * @notice Get all agreements.
+   * @return {Agreement[]}
+   */
+  function getAgreements() public view returns (Agreement[] memory) {
+    return agreements;
+  }
+
+  /**
    * @notice Create a new agreement.
    * @param bob {address} The second party's adddress.
    * @param content {bytes} The vow content.

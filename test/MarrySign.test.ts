@@ -306,6 +306,25 @@ describe('MarrySign', () => {
     })
   })
 
+  describe('Agreement: List', () => {
+    it('Should return all agreements', async () => {
+      const index1 = await _createAgreement(contract, alice, bob)
+      expect(index1).to.be.equal(0)
+      const index2 = await _createAgreement(contract, alice, bob)
+      expect(index2).to.be.equal(1)
+
+      const agreements = await contract.getAgreements()
+      expect(agreements.length).to.be.equal(2)
+
+      // Dummy check for agreement content.
+      const areCorrectResults = agreements.every(
+        (agreement: MarrySign.AgreementStruct) => agreement.alice.toString() == alice.address
+      )
+
+      expect(areCorrectResults).to.be.true
+    })
+  })
+
   describe('Contract: Withdrawal', () => {
     it('Should revert if called by not the owner', async () => {
       await expect(
