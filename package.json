@@ -5,7 +5,7 @@
   "scripts": {
     "network:run": "hardhat node",
     "contract:compile": "hardhat compile",
-    "contract:deploy": "hardhat run scripts/deploy.ts",
+    "contract:deploy": "hardhat run --network localhost scripts/deploy.ts",
     "test": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "format": "prettier --write ."
