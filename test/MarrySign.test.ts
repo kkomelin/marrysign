@@ -39,7 +39,17 @@ describe('MarrySign', () => {
     bob: SignerWithAddress
   ) => {
     const createdAt = nowTimestamp()
-    const content = stringToHex('Test vow')
+    const agreementData = {
+      partner1: {
+        name: 'Alice Smith',
+      },
+      partner2: {
+        name: 'Bob Jones',
+      },
+      vow: 'Test vow',
+    }
+
+    const content = stringToHex(JSON.stringify(agreementData))
 
     // Capture agreement index in case a few contracts created one by one.
     let capturedIndex: number = -1
