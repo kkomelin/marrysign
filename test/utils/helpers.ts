@@ -1,7 +1,12 @@
+import { BytesLike } from 'ethers'
 import { ethers } from 'hardhat'
 
 export const stringToHex = (text: string): string => {
   return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(text))
+}
+
+export const hexToString = (hex: BytesLike): string => {
+  return ethers.utils.toUtf8String(hex)
 }
 
 export const nowTimestamp = (): number => {
