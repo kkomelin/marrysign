@@ -250,8 +250,8 @@ contract MarrySign {
   modifier validTimestamp(uint256 timestamp) {
     if (
       timestamp == 0 ||
-      timestamp > block.timestamp ||
-      timestamp < block.timestamp - 86400
+      timestamp > block.timestamp + 15 seconds ||
+      timestamp < block.timestamp - 1 days
     ) {
       revert InvalidTimestamp();
     }
