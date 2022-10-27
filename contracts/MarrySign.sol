@@ -120,7 +120,10 @@ contract MarrySign {
     bytes memory content,
     uint256 terminationCost,
     uint256 createdAt
-  ) public validTimestamp(createdAt) {
+  ) 
+  public 
+  // validTimestamp(createdAt) 
+  {
     if (content.length == 0) {
       revert EmptyContent();
     }
@@ -152,7 +155,7 @@ contract MarrySign {
    */
   function acceptAgreement(uint256 index, uint256 acceptedAt)
     public
-    validTimestamp(acceptedAt)
+    // validTimestamp(acceptedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();
@@ -174,7 +177,7 @@ contract MarrySign {
    */
   function refuseAgreement(uint256 index, uint256 refusedAt)
     public
-    validTimestamp(refusedAt)
+    // validTimestamp(refusedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();

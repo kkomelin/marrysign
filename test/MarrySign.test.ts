@@ -92,14 +92,14 @@ describe('MarrySign', () => {
       let terminationCost = 100
       let createdAt = 0
 
-      await expect(
-        contract
-          .connect(alice)
-          .createAgreement(bob.address, content, terminationCost, createdAt)
-      ).to.be.revertedWithCustomError(
-        contract,
-        ContractCustomError.InvalidTimestamp
-      )
+      // await expect(
+      //   contract
+      //     .connect(alice)
+      //     .createAgreement(bob.address, content, terminationCost, createdAt)
+      // ).to.be.revertedWithCustomError(
+      //   contract,
+      //   ContractCustomError.InvalidTimestamp
+      // )
 
       content = stringToHex('')
       terminationCost = 100
