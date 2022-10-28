@@ -86,6 +86,46 @@ describe('MarrySign', () => {
     })
   })
 
+  describe('Agreement: Getters', () => {
+    it("Should return the active agreement by Alice's address", async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      const agreement = await contract.callStatic.getAgreementByAddress(
+        alice.address
+      )
+      expect(agreement.alice).to.be.equal(alice.address)
+      expect(agreement.bob).to.be.equal(bob.address)
+      expect(agreement.state).to.be.equal(AgreementState.Created)
+    })
+
+    it("Should return the active agreement by Bob's address", async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      const agreement = await contract.callStatic.getAgreementByAddress(
+        bob.address
+      )
+      expect(agreement.alice).to.be.equal(alice.address)
+      expect(agreement.bob).to.be.equal(bob.address)
+      expect(agreement.state).to.be.equal(AgreementState.Created)
+    })
+
+    it("Should not return an inactive agreement by Alice's address", async () => {
+      const index = await _createAgreement(contract, alice, bob)
+      expect(index).to.be.equal(0)
+
+      await contract.connect(bob).refuseAgreement(index, nowTimestamp())
+
+      await expect(
+        contract.callStatic.getAgreementByAddress(alice.address)
+      ).to.be.revertedWithCustomError(
+        contract,
+        ContractCustomError.AgreementNotFound
+      )
+    })
+  })
+
   describe('Agreement: Creation', () => {
     it('Should revert if parameters are invalid', async () => {
       let content = stringToHex('Test vow')

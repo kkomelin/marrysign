@@ -7,4 +7,5 @@ export enum ContractCustomError {
   BobNotSpecified = 'BobNotSpecified',
   AccessDenied = 'AccessDenied',
   MustPayExactTerminationCost = 'MustPayExactTerminationCost',
+  AgreementNotFound = 'AgreementNotFound',
 }

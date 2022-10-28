@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import "hardhat/console.sol";
+
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
@@ -43,6 +45,8 @@ contract MarrySign {
   error AccessDenied();
   // @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
   error MustPayExactTerminationCost();
+  // @dev if there is no an active agreementby given criteria.
+  error AgreementNotFound();
 
   /**
    * @notice Is emitted when a new agreement is created.
@@ -101,6 +105,33 @@ contract MarrySign {
   }
 
   /**
+   * @notice Get an agreement by an address of one of the partners.
+   * @param partnerAddress {address} Partner's address.
+   * @return {Agreement}
+   */
+  function getAgreementByAddress(address partnerAddress)
+    public
+    view
+    returns (Agreement memory)
+  {
+    for (uint256 i = 0; i < getAgreementCount(); i++) {
+
+      if (
+        agreements[i].state != AgreementState.Created &&
+        agreements[i].state != AgreementState.Accepted
+      ) {
+        continue;
+      }
+
+      if (agreements[i].alice == partnerAddress || agreements[i].bob == partnerAddress) {
+        return agreements[i];
+      }
+    }
+
+    revert AgreementNotFound();
+  }
+
+  /**
    * @notice Get all agreements.
    * @return {Agreement[]}
    */
@@ -120,9 +151,7 @@ contract MarrySign {
     bytes memory content,
     uint256 terminationCost,
     uint256 createdAt
-  ) 
-  public 
-  // validTimestamp(createdAt) 
+  ) public // validTimestamp(createdAt)
   {
     if (content.length == 0) {
       revert EmptyContent();
@@ -155,7 +184,7 @@ contract MarrySign {
    */
   function acceptAgreement(uint256 index, uint256 acceptedAt)
     public
-    // validTimestamp(acceptedAt)
+  // validTimestamp(acceptedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();
@@ -177,7 +206,7 @@ contract MarrySign {
    */
   function refuseAgreement(uint256 index, uint256 refusedAt)
     public
-    // validTimestamp(refusedAt)
+  // validTimestamp(refusedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();
