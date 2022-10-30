@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
@@ -31,6 +31,11 @@ contract MarrySign {
     uint256 updatedAt;
   }
 
+  struct Pointer {
+    uint256 index;
+    bool isSet;
+  }
+
   // @dev Some features are only available to the contract owner, e.g. withdrawal.
   error CallerIsNotOwner();
   // @dev Agreement.content cannot be empty.
@@ -41,45 +46,45 @@ contract MarrySign {
   error BobNotSpecified();
   // @dev We use it to check Agreement's createdAt, updatedAt, etc. timestamps.
   error InvalidTimestamp();
-  // @dev The passed agreement ID/index should be inside the array range.
-  error InvalidAgreementId();
   // @dev When the caller is not authorized to call a function.
   error AccessDenied();
   // @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
   error MustPayExactTerminationCost();
-  // @dev if there is no an active agreementby given criteria.
+  // @dev if there is no an active agreement by given criteria.
   error AgreementNotFound();
 
   /**
    * @notice Is emitted when a new agreement is created.
-   * @param index {unit256} The newly-created agreement index.
+   * @param id {bytes32} The newly-created agreement ID.
    */
-  event AgreementCreated(uint256 index);
+  event AgreementCreated(bytes32 id);
   /**
    * @notice Is emitted when the agreement is accepted by the second party (Bob).
-   * @param index {unit256} The accepted agreement index.
+   * @param id {bytes32} The accepted agreement ID.
    */
-  event AgreementAccepted(uint256 index);
+  event AgreementAccepted(bytes32 id);
   /**
    * @notice Is emitted when the agreement is refused by any party.
-   * @param index {unit256} The refused agreement index.
+   * @param id {bytes32} The refused agreement ID.
    */
-  event AgreementRefused(uint256 index);
+  event AgreementRefused(bytes32 id);
   /**
    * @notice Is emitted when the agreement is terminated by any party.
-   * @param index {unit256} The terminated agreement index.
+   * @param id {bytes32} The terminated agreement ID.
    */
-  event AgreementTerminated(uint256 index);
+  event AgreementTerminated(bytes32 id);
 
   // @dev We charge this percent of the termination cost for our service.
   uint8 private constant SERVICE_FEE_PERCENT = 10;
+
   // @dev The contract owner.
   address payable private owner;
   // @dev List of all agreements created.
   Agreement[] private agreements;
-  // @dev Agreement.hash to Agreement index mapping for easier navigation.
-  mapping(bytes32 => uint256) private pointer;
+  // @dev Maps Agreement.id to Agreement index for easier navigation.
+  mapping(bytes32 => Pointer) private pointers;
 
+  // @dev Used for making Agreement.IDs trully unique.
   uint256 private randomFactor;
 
   /**
@@ -99,15 +104,20 @@ contract MarrySign {
 
   /**
    * @notice Get an agreement.
-   * @param index {uint256} Agreement array index.
+   * @param id {bytes32} Agreement ID.
    * @return {Agreement}
    */
-  function getAgreement(uint256 index) public view returns (Agreement memory) {
-    if (index >= getAgreementCount()) {
-      revert InvalidAgreementId();
+  function getAgreement(bytes32 id) public view returns (Agreement memory) {
+    // If Pointer.isSet=false, it means that this pointer "doesn't exist".
+    if (!pointers[id].isSet) {
+      revert AgreementNotFound();
     }
 
-    return agreements[index];
+    if (bytes32(agreements[pointers[id].index].id).length == 0) {
+      revert AgreementNotFound();
+    }
+
+    return agreements[pointers[id].index];
   }
 
   /**
@@ -193,75 +203,66 @@ contract MarrySign {
 
     agreements.push(agreement);
 
-    pointer[id] = getAgreementCount() - 1;
+    pointers[id] = Pointer(getAgreementCount() - 1, true);
 
-    emit AgreementCreated(pointer[id]);
+    emit AgreementCreated(id);
   }
 
   /*
    * @notice Accept the agreement by the second party (Bob).
-   * @param index {uint256} The agreement index.
+   * @param id {bytes32} The agreement ID.
    * @param acceptedAt {uint256} The acceptance date in seconds since the Unix epoch.
    */
-  function acceptAgreement(uint256 index, uint256 acceptedAt)
+  function acceptAgreement(bytes32 id, uint256 acceptedAt)
     public
     validTimestamp(acceptedAt)
   {
-    if (index >= getAgreementCount()) {
-      revert InvalidAgreementId();
-    }
-    if (msg.sender != agreements[index].bob) {
+    Agreement memory agreement = getAgreement(id);
+
+    if (msg.sender != agreement.bob) {
       revert AccessDenied();
     }
 
-    agreements[index].state = AgreementState.Accepted;
-    agreements[index].updatedAt = acceptedAt;
+    agreements[pointers[id].index].state = AgreementState.Accepted;
+    agreements[pointers[id].index].updatedAt = acceptedAt;
 
-    emit AgreementAccepted(index);
+    emit AgreementAccepted(id);
   }
 
   /*
    * @notice Refuse an agreement by either Alice or Bob.
-   * @param index {uint256} The agreement index.
+   * @param id {bytes3} The agreement ID.
    * @param acceptedAt {uint256} The refusal date in seconds since the Unix epoch.
    */
-  function refuseAgreement(uint256 index, uint256 refusedAt)
+  function refuseAgreement(bytes32 id, uint256 refusedAt)
     public
     validTimestamp(refusedAt)
   {
-    if (index >= getAgreementCount()) {
-      revert InvalidAgreementId();
-    }
-    if (
-      agreements[index].bob != msg.sender &&
-      agreements[index].alice != msg.sender
-    ) {
+    Agreement memory agreement = getAgreement(id);
+
+    if (agreement.bob != msg.sender && agreement.alice != msg.sender) {
       revert AccessDenied();
     }
 
-    agreements[index].state = AgreementState.Refused;
-    agreements[index].updatedAt = refusedAt;
+    agreements[pointers[id].index].state = AgreementState.Refused;
+    agreements[pointers[id].index].updatedAt = refusedAt;
 
-    emit AgreementRefused(index);
+    emit AgreementRefused(id);
   }
 
   /*
    * @notice Terminate an agreement by either either Alice or Bob (involves paying compensation and service fee).
-   * @param index {uint256} The agreement index.
+   * @param id {bytes32} The agreement ID.
    */
-  function terminateAgreement(uint256 index) public payable {
-    if (index >= getAgreementCount()) {
-      revert InvalidAgreementId();
-    }
-    if (
-      agreements[index].bob != msg.sender &&
-      agreements[index].alice != msg.sender
-    ) {
+  function terminateAgreement(bytes32 id) public payable {
+    Agreement memory agreement = getAgreement(id);
+
+    if (agreement.bob != msg.sender && agreement.alice != msg.sender) {
       revert AccessDenied();
     }
 
     // Make sure the requested compensation matches that which is stated in the agreement.
-    if (msg.value != agreements[index].terminationCost) {
+    if (msg.value != agreement.terminationCost) {
       revert MustPayExactTerminationCost();
     }
 
@@ -272,21 +273,21 @@ contract MarrySign {
     }
 
     uint256 compensation = msg.value - fee;
-    if (agreements[index].alice == msg.sender) {
+    if (agreement.alice == msg.sender) {
       // Alice pays Bob the compensation.
-      payable(agreements[index].bob).transfer(compensation);
+      payable(agreement.bob).transfer(compensation);
     } else {
       // Bob pays Alice the compensation.
-      payable(agreements[index].alice).transfer(compensation);
+      payable(agreement.alice).transfer(compensation);
     }
 
-    // @todo Find a way to destroy the array element completely.
-    delete agreements[index];
+    // @todo Experiement with delete agreement;
+    delete agreements[pointers[id].index];
     // We have to somehow distinguish the terminated agreement from active ones.
     // That's because the array item deletion doesn't factually remove the element from the array.
-    agreements[index].state = AgreementState.Terminated;
+    agreements[pointers[id].index].state = AgreementState.Terminated;
 
-    emit AgreementTerminated(index);
+    emit AgreementTerminated(id);
   }
 
   /*
