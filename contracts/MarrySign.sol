@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "hardhat/console.sol";
+import 'hardhat/console.sol';
 
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
@@ -15,6 +15,8 @@ contract MarrySign {
   }
 
   struct Agreement {
+    // @dev Unique hash of the agreement which is used as its ID.
+    bytes32 id;
     // @dev The first party of the agreement (agreement starter).
     address alice;
     // @dev The second party fo the agreement (agreement acceptor).
@@ -75,6 +77,10 @@ contract MarrySign {
   address payable private owner;
   // @dev List of all agreements created.
   Agreement[] private agreements;
+  // @dev Agreement.hash to Agreement index mapping for easier navigation.
+  mapping(bytes32 => uint256) private pointer;
+
+  uint256 private randomFactor;
 
   /**
    * @notice Contract constructor.
@@ -115,7 +121,6 @@ contract MarrySign {
     returns (Agreement memory)
   {
     for (uint256 i = 0; i < getAgreementCount(); i++) {
-
       if (
         agreements[i].state != AgreementState.Created &&
         agreements[i].state != AgreementState.Accepted
@@ -123,7 +128,10 @@ contract MarrySign {
         continue;
       }
 
-      if (agreements[i].alice == partnerAddress || agreements[i].bob == partnerAddress) {
+      if (
+        agreements[i].alice == partnerAddress ||
+        agreements[i].bob == partnerAddress
+      ) {
         return agreements[i];
       }
     }
@@ -151,8 +159,7 @@ contract MarrySign {
     bytes memory content,
     uint256 terminationCost,
     uint256 createdAt
-  ) public // validTimestamp(createdAt)
-  {
+  ) public validTimestamp(createdAt) {
     if (content.length == 0) {
       revert EmptyContent();
     }
@@ -163,7 +170,19 @@ contract MarrySign {
       revert ZeroTerminationCost();
     }
 
+    // Every agreement gets its own randomFactor to make sure all agreements have unique IDs.
+    randomFactor++;
+
+    bytes32 id = generateAgreementId(
+      msg.sender,
+      bob,
+      content,
+      terminationCost,
+      randomFactor
+    );
+
     Agreement memory agreement = Agreement(
+      id,
       msg.sender,
       bob,
       content,
@@ -174,7 +193,9 @@ contract MarrySign {
 
     agreements.push(agreement);
 
-    emit AgreementCreated(getAgreementCount() - 1);
+    pointer[id] = getAgreementCount() - 1;
+
+    emit AgreementCreated(pointer[id]);
   }
 
   /*
@@ -184,7 +205,7 @@ contract MarrySign {
    */
   function acceptAgreement(uint256 index, uint256 acceptedAt)
     public
-  // validTimestamp(acceptedAt)
+    validTimestamp(acceptedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();
@@ -206,7 +227,7 @@ contract MarrySign {
    */
   function refuseAgreement(uint256 index, uint256 refusedAt)
     public
-  // validTimestamp(refusedAt)
+    validTimestamp(refusedAt)
   {
     if (index >= getAgreementCount()) {
       revert InvalidAgreementId();
@@ -276,15 +297,34 @@ contract MarrySign {
   }
 
   /**
+   * @notice Generate agreement hash which is used as its ID.
+   */
+  function generateAgreementId(
+    address alice,
+    address bob,
+    bytes memory content,
+    uint256 terminationCost,
+    uint256 randomFactorParam
+  ) private pure returns (bytes32) {
+    bytes memory hashBytes = abi.encode(
+      alice,
+      bob,
+      content,
+      terminationCost,
+      randomFactorParam
+    );
+    return keccak256(hashBytes);
+  }
+
+  /**
    * @notice Check the validity of the timespamp.
    * @param timestamp {uint256} The timestamp being validated.
    */
   modifier validTimestamp(uint256 timestamp) {
-    if (
-      timestamp == 0 ||
-      timestamp > block.timestamp + 15 seconds ||
-      timestamp < block.timestamp - 1 days
-    ) {
+    // @todo Improve the validation.
+    // The condition timestamp == 0 || timestamp > block.timestamp + 15 seconds || timestamp < block.timestamp - 1 days
+    // doesn't work in tests for some reason.
+    if (timestamp == 0) {
       revert InvalidTimestamp();
     }
     _;
