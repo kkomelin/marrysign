@@ -281,7 +281,6 @@ contract MarrySign {
       payable(agreement.alice).transfer(compensation);
     }
 
-    // @todo Experiement with delete agreement;
     delete agreements[pointers[id].index];
     // We have to somehow distinguish the terminated agreement from active ones.
     // That's because the array item deletion doesn't factually remove the element from the array.
