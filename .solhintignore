@@ -1,2 +1,5 @@
-node_modules
+artifacts/
+cache/
+coverage/
+node_modules/
 contracts/test

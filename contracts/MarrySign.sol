@@ -15,19 +15,19 @@ contract MarrySign {
   }
 
   struct Agreement {
-    // @dev Unique hash of the agreement which is used as its ID.
+    /// @dev Unique hash of the agreement which is used as its ID.
     bytes32 id;
-    // @dev The first party of the agreement (agreement starter).
+    /// @dev The first party of the agreement (agreement starter).
     address alice;
-    // @dev The second party fo the agreement (agreement acceptor).
+    /// @dev The second party fo the agreement (agreement acceptor).
     address bob;
-    // @dev Vow text.
+    /// @dev Vow text.
     bytes content;
-    // @dev A penalty which the one pays for agreement termination.
+    /// @dev A penalty which the one pays for agreement termination.
     uint256 terminationCost;
-    // @dev Agreement status.
+    /// @dev Agreement status.
     AgreementState state;
-    // @dev Create/update date in seconds from Unix epoch.
+    /// @dev Create/update date in seconds from Unix epoch.
     uint256 updatedAt;
   }
 
@@ -36,21 +36,21 @@ contract MarrySign {
     bool isSet;
   }
 
-  // @dev Some features are only available to the contract owner, e.g. withdrawal.
+  /// @dev Some features are only available to the contract owner, e.g. withdrawal.
   error CallerIsNotOwner();
-  // @dev Agreement.content cannot be empty.
+  /// @dev Agreement.content cannot be empty.
   error EmptyContent();
-  // @dev We don't allow zero termination cost.
+  /// @dev We don't allow zero termination cost.
   error ZeroTerminationCost();
-  // @dev When Bob is not set.
+  /// @dev When Bob is not set.
   error BobNotSpecified();
-  // @dev We use it to check Agreement's createdAt, updatedAt, etc. timestamps.
+  /// @dev We use it to check Agreement's createdAt, updatedAt, etc. timestamps.
   error InvalidTimestamp();
-  // @dev When the caller is not authorized to call a function.
+  /// @dev When the caller is not authorized to call a function.
   error AccessDenied();
-  // @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
+  /// @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
   error MustPayExactTerminationCost();
-  // @dev if there is no an active agreement by given criteria.
+  /// @dev if there is no an active agreement by given criteria.
   error AgreementNotFound();
 
   /**
@@ -74,17 +74,17 @@ contract MarrySign {
    */
   event AgreementTerminated(bytes32 id);
 
-  // @dev We charge this percent of the termination cost for our service.
+  /// @dev We charge this percent of the termination cost for our service.
   uint8 private constant SERVICE_FEE_PERCENT = 10;
 
-  // @dev The contract owner.
+  /// @dev The contract owner.
   address payable private owner;
-  // @dev List of all agreements created.
+  /// @dev List of all agreements created.
   Agreement[] private agreements;
-  // @dev Maps Agreement.id to Agreement index for easier navigation.
+  /// @dev Maps Agreement.id to Agreement index for easier navigation.
   mapping(bytes32 => Pointer) private pointers;
 
-  // @dev Used for making Agreement.IDs trully unique.
+  /// @dev Used for making Agreement.IDs trully unique.
   uint256 private randomFactor;
 
   /**
