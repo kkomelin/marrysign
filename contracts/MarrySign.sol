@@ -309,6 +309,7 @@ contract MarrySign {
     bytes memory hashBytes = abi.encode(
       alice,
       bob,
+      // @todo: Think about excluding content from here because if it's long, it can affect performance.
       content,
       terminationCost,
       randomFactorParam

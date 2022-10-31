@@ -22,12 +22,12 @@ npm run test:gas
 ## Run test network
 
 ```shell
-npm run network:run
+npm run network
 ```
 
-## Deploy the contract to the test network
+## Compile and deploy the contract to the test network
 
 ```shell
-npm run contract:compile
-npm run contract:deploy
+npm run compile
+npm run deploy
 ```
