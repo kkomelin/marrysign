@@ -31,3 +31,7 @@ npm run network
 npm run compile
 npm run deploy
 ```
+
+# Code docs
+
+[here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
