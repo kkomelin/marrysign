@@ -199,10 +199,8 @@ describe('MarrySign', () => {
     it('Should revert if Alice tries to accept an agreement', async () => {
       const id = await _createAgreement(contract, alice, bob)
 
-      const acceptedAt = nowTimestamp()
-
       await expect(
-        contract.connect(alice).acceptAgreement(id, acceptedAt)
+        contract.connect(alice).acceptAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
         ContractCustomError.AccessDenied
@@ -211,10 +209,9 @@ describe('MarrySign', () => {
 
     it('Should revert if the passed ID does not exist', async () => {
       const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
-      const acceptedAt = nowTimestamp()
 
       await expect(
-        contract.connect(bob).acceptAgreement(nonExistentId, acceptedAt)
+        contract.connect(bob).acceptAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
         ContractCustomError.AgreementNotFound
@@ -225,7 +222,6 @@ describe('MarrySign', () => {
       const id = await _createAgreement(contract, alice, bob)
 
       const acceptedAt = nowTimestamp()
-
       await expect(contract.connect(bob).acceptAgreement(id, acceptedAt))
         .to.emit(contract, AgreementEventName.AgreementAccepted)
         .withArgs(id)
@@ -239,10 +235,9 @@ describe('MarrySign', () => {
   describe('Agreement: Refusal', () => {
     it('Should revert if the passed ID does not exist', async () => {
       const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
-      const refusedAt = nowTimestamp()
 
       await expect(
-        contract.connect(alice).refuseAgreement(nonExistentId, refusedAt)
+        contract.connect(alice).refuseAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
         ContractCustomError.AgreementNotFound
@@ -252,10 +247,8 @@ describe('MarrySign', () => {
     it('Should revert if it is refused by neither Alice or Bob', async () => {
       const id = await _createAgreement(contract, alice, bob)
 
-      const refuseAt = nowTimestamp()
-
       await expect(
-        contract.connect(owner).refuseAgreement(id, refuseAt)
+        contract.connect(owner).refuseAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
         ContractCustomError.AccessDenied
@@ -266,7 +259,6 @@ describe('MarrySign', () => {
       const id = await _createAgreement(contract, alice, bob)
 
       const refusedAt = nowTimestamp()
-
       await expect(contract.connect(bob).refuseAgreement(id, refusedAt))
         .to.emit(contract, AgreementEventName.AgreementRefused)
         .withArgs(id)
@@ -280,7 +272,6 @@ describe('MarrySign', () => {
       const id = await _createAgreement(contract, alice, bob)
 
       const refusedAt = nowTimestamp()
-
       await expect(contract.connect(alice).refuseAgreement(id, refusedAt))
         .to.emit(contract, AgreementEventName.AgreementRefused)
         .withArgs(id)
@@ -353,21 +344,23 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement: List', () => {
-    it('Should return all agreements', async () => {
+  describe('Agreement: List of Accepted', () => {
+    it('Should return only accepted agreements', async () => {
       const id1 = await _createAgreement(contract, alice, bob)
       const id2 = await _createAgreement(contract, alice, bob)
+      const id3 = await _createAgreement(contract, alice, bob)
 
-      const agreements = await contract.getAgreements()
-      expect(agreements.length).to.be.equal(2)
+      await expect(contract.connect(bob).acceptAgreement(id2, nowTimestamp()))
+        .to.emit(contract, AgreementEventName.AgreementAccepted)
+        .withArgs(id2)
 
-      // Dummy check for agreement content.
-      const areCorrectResults = agreements.every(
-        (agreement: MarrySign.AgreementStruct) =>
-          [id1, id2].includes(agreement.id.toString()) && agreement.alice.toString() == alice.address
-      )
+      const agreements = await contract.getAcceptedAgreements()
+      expect(agreements.length).to.be.equal(1)
 
-      expect(areCorrectResults).to.be.true
+      const agreement = agreements[0]
+      expect(id2).to.be.equal(agreement.id)
+      expect(agreement.state).to.be.equal(AgreementState.Accepted)
+      expect(agreement.alice).to.be.equal(alice.address)
     })
   })
 

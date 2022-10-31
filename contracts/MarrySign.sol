@@ -150,11 +150,35 @@ contract MarrySign {
   }
 
   /**
-   * @notice Get all agreements.
+   * @notice Get accepted (public) agreements.
+   * @dev @todo: Optimize : there are two similar loops.
+   * @dev @todo: Add pagination to not go over time/size limits.
    * @return {Agreement[]}
    */
-  function getAgreements() public view returns (Agreement[] memory) {
-    return agreements;
+  function getAcceptedAgreements() public view returns (Agreement[] memory) {
+    uint256 acceptedCount = 0;
+
+    for (uint256 i = 0; i < getAgreementCount(); i++) {
+      if (agreements[i].state != AgreementState.Accepted) {
+        continue;
+      }
+
+      acceptedCount++;
+    }
+
+    Agreement[] memory acceptedAgreements = new Agreement[](acceptedCount);
+
+    uint256 j = 0;
+    for (uint256 i = 0; i < getAgreementCount(); i++) {
+      if (agreements[i].state != AgreementState.Accepted) {
+        continue;
+      }
+
+      acceptedAgreements[j] = agreements[i];
+      j++;
+    }
+
+    return acceptedAgreements;
   }
 
   /**
