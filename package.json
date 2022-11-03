@@ -10,8 +10,8 @@
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "test": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
+    "test:coverage": "hardhat coverage --solcoverjs ./.solcover.js",
     "format": "prettier --write .",
-    "coverage": "hardhat coverage --solcoverjs ./.solcover.js",
     "docs": "hardhat docgen",
     "prepare": "husky install"
   },

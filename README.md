@@ -19,6 +19,12 @@ Run automated tests and estimate Gas consumption:
 npm run test:gas
 ```
 
+Run automated tests and calculate coverage:
+
+```shell
+npm run test:coverage
+```
+
 ## Run test network
 
 ```shell
