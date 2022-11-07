@@ -4,14 +4,14 @@ import { expect } from 'chai'
 import { BytesLike } from 'ethers'
 import { ethers } from 'hardhat'
 import { MarrySign } from '../typechain'
-import { AgreementEventName } from '../types/AgreementEventName'
-import { AgreementState } from '../types/AgreementState'
-import { ContractCustomError } from '../types/ContractCustomError'
+import { EAgreementEventName } from '../types/EAgreementEventName'
+import { EAgreementState } from '../types/EAgreementState'
+import { ECustomContractError } from '../types/ECustomContractError'
 import { deployMarrySignContractFixture } from './utils/fixtures'
 import {
   nowTimestamp,
   stringToHex,
-  terminationServiceFee
+  terminationServiceFee,
 } from './utils/helpers'
 
 describe('MarrySign', () => {
@@ -68,13 +68,13 @@ describe('MarrySign', () => {
         .connect(alice)
         .createAgreement(bob.address, content, terminationCost, createdAt)
     )
-      .to.emit(contract, AgreementEventName.AgreementCreated)
+      .to.emit(contract, EAgreementEventName.AgreementCreated)
       .withArgs(captureId)
 
     const agreement = await contract.callStatic.getAgreement(capturedId)
     expect(agreement.alice).to.be.equal(alice.address)
     expect(agreement.bob).to.be.equal(bob.address)
-    expect(agreement.state).to.be.equal(AgreementState.Created)
+    expect(agreement.state).to.be.equal(EAgreementState.Created)
     expect(agreement.updatedAt).to.be.equal(createdAt)
     expect(agreement.terminationCost).to.be.equal(terminationCost)
     expect(agreement.content).to.be.equal(content)
@@ -90,7 +90,7 @@ describe('MarrySign', () => {
         contract.getAgreement(nonExistentId)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AgreementNotFound
+        ECustomContractError.AgreementNotFound
       )
     })
   })
@@ -105,7 +105,7 @@ describe('MarrySign', () => {
       expect(id).to.be.equal(agreement.id)
       expect(agreement.alice).to.be.equal(alice.address)
       expect(agreement.bob).to.be.equal(bob.address)
-      expect(agreement.state).to.be.equal(AgreementState.Created)
+      expect(agreement.state).to.be.equal(EAgreementState.Created)
     })
 
     it("Should return the active agreement by Bob's address", async () => {
@@ -117,7 +117,7 @@ describe('MarrySign', () => {
       expect(id).to.be.equal(agreement.id)
       expect(agreement.alice).to.be.equal(alice.address)
       expect(agreement.bob).to.be.equal(bob.address)
-      expect(agreement.state).to.be.equal(AgreementState.Created)
+      expect(agreement.state).to.be.equal(EAgreementState.Created)
     })
 
     it("Should not return an inactive agreement by Alice's address if the agreement has been refused already", async () => {
@@ -129,7 +129,7 @@ describe('MarrySign', () => {
         contract.callStatic.getAgreementByAddress(alice.address)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AgreementNotFound
+        ECustomContractError.AgreementNotFound
       )
     })
   })
@@ -146,7 +146,7 @@ describe('MarrySign', () => {
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.InvalidTimestamp
+        ECustomContractError.InvalidTimestamp
       )
 
       content = stringToHex('')
@@ -159,7 +159,7 @@ describe('MarrySign', () => {
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.EmptyContent
+        ECustomContractError.EmptyContent
       )
 
       content = stringToHex('Test vow')
@@ -172,13 +172,13 @@ describe('MarrySign', () => {
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.ZeroTerminationCost
+        ECustomContractError.ZeroTerminationCost
       )
     })
 
     it('Should create an agreement and emit event for correct parameters', async () => {
       await _createAgreement(contract, alice, bob)
- 
+
       const count = await contract.callStatic.getAgreementCount()
       expect(count).to.be.equal(1)
     })
@@ -203,7 +203,7 @@ describe('MarrySign', () => {
         contract.connect(alice).acceptAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AccessDenied
+        ECustomContractError.AccessDenied
       )
     })
 
@@ -214,7 +214,7 @@ describe('MarrySign', () => {
         contract.connect(bob).acceptAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AgreementNotFound
+        ECustomContractError.AgreementNotFound
       )
     })
 
@@ -223,11 +223,11 @@ describe('MarrySign', () => {
 
       const acceptedAt = nowTimestamp()
       await expect(contract.connect(bob).acceptAgreement(id, acceptedAt))
-        .to.emit(contract, AgreementEventName.AgreementAccepted)
+        .to.emit(contract, EAgreementEventName.AgreementAccepted)
         .withArgs(id)
 
       const agreement = await contract.callStatic.getAgreement(id)
-      expect(agreement.state).to.be.equal(AgreementState.Accepted)
+      expect(agreement.state).to.be.equal(EAgreementState.Accepted)
       expect(agreement.updatedAt).to.be.equal(acceptedAt)
     })
   })
@@ -240,7 +240,7 @@ describe('MarrySign', () => {
         contract.connect(alice).refuseAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AgreementNotFound
+        ECustomContractError.AgreementNotFound
       )
     })
 
@@ -251,7 +251,7 @@ describe('MarrySign', () => {
         contract.connect(owner).refuseAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AccessDenied
+        ECustomContractError.AccessDenied
       )
     })
 
@@ -260,11 +260,11 @@ describe('MarrySign', () => {
 
       const refusedAt = nowTimestamp()
       await expect(contract.connect(bob).refuseAgreement(id, refusedAt))
-        .to.emit(contract, AgreementEventName.AgreementRefused)
+        .to.emit(contract, EAgreementEventName.AgreementRefused)
         .withArgs(id)
 
       const agreement = await contract.callStatic.getAgreement(id)
-      expect(agreement.state).to.be.equal(AgreementState.Refused)
+      expect(agreement.state).to.be.equal(EAgreementState.Refused)
       expect(agreement.updatedAt).to.be.equal(refusedAt)
     })
 
@@ -273,7 +273,7 @@ describe('MarrySign', () => {
 
       const refusedAt = nowTimestamp()
       await expect(contract.connect(alice).refuseAgreement(id, refusedAt))
-        .to.emit(contract, AgreementEventName.AgreementRefused)
+        .to.emit(contract, EAgreementEventName.AgreementRefused)
         .withArgs(id)
 
       const agreement = await contract.callStatic.getAgreement(id)
@@ -290,7 +290,7 @@ describe('MarrySign', () => {
         contract.connect(owner).terminateAgreement(id)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.AccessDenied
+        ECustomContractError.AccessDenied
       )
     })
 
@@ -301,7 +301,7 @@ describe('MarrySign', () => {
         contract.connect(bob).terminateAgreement(id)
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.MustPayExactTerminationCost
+        ECustomContractError.MustPayExactTerminationCost
       )
     })
 
@@ -313,7 +313,7 @@ describe('MarrySign', () => {
           value: terminationCost,
         })
       )
-        .to.emit(contract, AgreementEventName.AgreementTerminated)
+        .to.emit(contract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
           [bob, alice, owner],
@@ -321,7 +321,7 @@ describe('MarrySign', () => {
         )
 
       const agreement = await contract.callStatic.getAgreement(id)
-      expect(agreement.state).to.be.equal(AgreementState.Terminated)
+      expect(agreement.state).to.be.equal(EAgreementState.Terminated)
     })
 
     it('Alice should be able to terminate an agreement with penalty', async () => {
@@ -332,7 +332,7 @@ describe('MarrySign', () => {
           value: terminationCost,
         })
       )
-        .to.emit(contract, AgreementEventName.AgreementTerminated)
+        .to.emit(contract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
           [alice, bob, owner],
@@ -340,7 +340,7 @@ describe('MarrySign', () => {
         )
 
       const agreement = await contract.callStatic.getAgreement(id)
-      expect(agreement.state).to.be.equal(AgreementState.Terminated)
+      expect(agreement.state).to.be.equal(EAgreementState.Terminated)
     })
   })
 
@@ -351,7 +351,7 @@ describe('MarrySign', () => {
       const id3 = await _createAgreement(contract, alice, bob)
 
       await expect(contract.connect(bob).acceptAgreement(id2, nowTimestamp()))
-        .to.emit(contract, AgreementEventName.AgreementAccepted)
+        .to.emit(contract, EAgreementEventName.AgreementAccepted)
         .withArgs(id2)
 
       const agreements = await contract.getAcceptedAgreements()
@@ -359,7 +359,7 @@ describe('MarrySign', () => {
 
       const agreement = agreements[0]
       expect(id2).to.be.equal(agreement.id)
-      expect(agreement.state).to.be.equal(AgreementState.Accepted)
+      expect(agreement.state).to.be.equal(EAgreementState.Accepted)
       expect(agreement.alice).to.be.equal(alice.address)
     })
   })
@@ -370,7 +370,7 @@ describe('MarrySign', () => {
         contract.connect(alice).withdraw()
       ).to.be.revertedWithCustomError(
         contract,
-        ContractCustomError.CallerIsNotOwner
+        ECustomContractError.CallerIsNotOwner
       )
     })
 

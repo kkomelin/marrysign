@@ -1,4 +1,4 @@
-export enum ContractCustomError {
+export enum ECustomContractError {
   CallerIsNotOwner = 'CallerIsNotOwner',
   EmptyContent = 'EmptyContent',
   InvalidTimestamp = 'InvalidTimestamp',
