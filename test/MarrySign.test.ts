@@ -120,6 +120,32 @@ describe('MarrySign', () => {
       expect(agreement.state).to.be.equal(EAgreementState.Created)
     })
 
+    it('Should return all accepted agreements', async () => {
+      const id1 = await _createAgreement(contract, alice, bob)
+      await contract.connect(bob).acceptAgreement(id1, nowTimestamp())
+
+      // Creates an agreement in Created state which should be omitted from results.
+      await _createAgreement(contract, alice, bob)
+
+      const id3 = await _createAgreement(contract, alice, bob)
+      await contract.connect(bob).acceptAgreement(id3, nowTimestamp())
+
+      const agreements = await contract.callStatic.getAcceptedAgreements()
+      expect(2).to.be.equal(agreements.length)
+
+      const actualAgrement1 = agreements[0]
+      expect(id1).to.be.equal(actualAgrement1.id)
+      expect(actualAgrement1.alice).to.be.equal(alice.address)
+      expect(actualAgrement1.bob).to.be.equal(bob.address)
+      expect(actualAgrement1.state).to.be.equal(EAgreementState.Accepted)
+
+      const actualAgrement3 = agreements[1]
+      expect(id3).to.be.equal(actualAgrement3.id)
+      expect(actualAgrement3.alice).to.be.equal(alice.address)
+      expect(actualAgrement3.bob).to.be.equal(bob.address)
+      expect(actualAgrement3.state).to.be.equal(EAgreementState.Accepted)
+    })
+
     it("Should not return an inactive agreement by Alice's address if the agreement has been refused already", async () => {
       const id = await _createAgreement(contract, alice, bob)
 
