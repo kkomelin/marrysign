@@ -256,7 +256,7 @@ contract MarrySign {
   /*
    * @notice Refuse an agreement by either Alice or Bob.
    * @param id {bytes3} The agreement ID.
-   * @param acceptedAt {uint256} The refusal date in seconds since the Unix epoch.
+   * @param refusedAt {uint256} The refusal date in seconds since the Unix epoch.
    */
   function refuseAgreement(bytes32 id, uint256 refusedAt)
     public
