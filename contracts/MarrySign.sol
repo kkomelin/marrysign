@@ -312,13 +312,13 @@ contract MarrySign {
     }
 
     // Calculate and transfer our service fees.
-    uint256 fee = (msg.value * SERVICE_FEE_PERCENT) / 100;
+    uint256 fee = (terminationCostInWei * SERVICE_FEE_PERCENT) / 100;
     if (fee != 0) {
       owner.transfer(fee);
     }
 
     // Pay the rest to the oposite partner.
-    uint256 compensation = msg.value - fee;
+    uint256 compensation = terminationCostInWei - fee;
     if (agreement.alice == msg.sender) {
       // Alice pays Bob the compensation.
       payable(agreement.bob).transfer(compensation);
