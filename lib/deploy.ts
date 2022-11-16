@@ -15,6 +15,7 @@ export async function deployContracts() {
     priceFeedAddress = resultsAC.mockV3AggregatorContract.address
   } else {
     priceFeedAddress = extraNetworkConfig.goerli.ethUsdPriceFeed
+    resultsAC = { mockV3AggregatorContract: { address: priceFeedAddress } }
   }
   // @todo: Add priceFeedAddress for production.
 

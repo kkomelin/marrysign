@@ -17,8 +17,13 @@ A special [kkomelin/marrysign/contracts/CurrencyConverter.sol](https://github.co
 
 On the front-end level, we display ETH equivalent of the USD amount on the Create Agreement, Accept Agreement and Terminate Agreement forms, which is obtained from Chainlink Price Feed in Web2 way. See [kkomelin/marrysign.com/lib/services/chainlink/index.ts](https://github.com/kkomelin/marrysign.com/blob/main/lib/services/chainlink/index.ts)
 
+## Configuration
 
-## Install
+See [kkomelin/marrysign/.example.env](https://github.com/kkomelin/marrysign/.example.env) for reference.
+
+TBC
+
+## Installation
 
 **Please note only NPM is supported at the moment.**
 
