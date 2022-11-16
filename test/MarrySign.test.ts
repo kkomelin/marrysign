@@ -22,7 +22,7 @@ describe('MarrySign', () => {
   let bob: SignerWithAddress
   let mockV3AggregatorContract: MockV3Aggregator
 
-  const terminationCostInUSD = 100 // 1000000
+  const terminationCostInUSD = 10 // 1000000
   const serviceFeePercent = 10 // Have to hardcode it here for now.
 
   beforeEach(async () => {
@@ -374,8 +374,6 @@ describe('MarrySign', () => {
         ethPriceDecimals
       )
 
-      const aliceBalance = terminationCostInEth.sub(serviceFeeInEth)
-
       await expect(
         marrySignContract.connect(bob).terminateAgreement(id, {
           value: terminationCostInEth,
@@ -385,7 +383,11 @@ describe('MarrySign', () => {
         .withArgs(id)
         .to.changeEtherBalances(
           [bob, alice, owner],
-          [-terminationCostInEth, aliceBalance, terminationCostInEth]
+          [
+            -terminationCostInEth,
+            terminationCostInEth.sub(serviceFeeInEth),
+            serviceFeeInEth,
+          ]
         )
 
       const agreement = await marrySignContract.callStatic.getAgreement(id)
@@ -419,8 +421,6 @@ describe('MarrySign', () => {
         ethPriceDecimals
       )
 
-      const bobBalance = terminationCostInEth.sub(serviceFeeInEth)
-
       await expect(
         marrySignContract.connect(alice).terminateAgreement(id, {
           value: terminationCostInEth,
@@ -430,7 +430,11 @@ describe('MarrySign', () => {
         .withArgs(id)
         .to.changeEtherBalances(
           [alice, bob, owner],
-          [-terminationCostInEth, bobBalance, terminationCostInEth]
+          [
+            -terminationCostInEth,
+            terminationCostInEth.sub(serviceFeeInEth),
+            serviceFeeInEth,
+          ]
         )
 
       const agreement = await marrySignContract.callStatic.getAgreement(id)

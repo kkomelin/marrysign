@@ -1,4 +1,4 @@
-import { BytesLike, BigNumber } from 'ethers'
+import { BigNumber, BytesLike } from 'ethers'
 import { ethers } from 'hardhat'
 
 export const stringToHex = (text: string): string => {
@@ -25,8 +25,7 @@ export const usdToWei = (
   ethPrice: BigNumber,
   ethPriceDecimals: number
 ): BigNumber => {
-  const ethPriceUsd =
-    Number(ethPrice.toString()) / Math.pow(10, ethPriceDecimals)
-
-  return ethers.utils.parseEther((Number(usdAmount) / ethPriceUsd).toFixed(10)) // * Math.pow(10, 18)
+  return BigNumber.from((usdAmount * Math.pow(10, 18)).toString()).div(
+    ethPrice.div(Math.pow(10, ethPriceDecimals))
+  )
 }
