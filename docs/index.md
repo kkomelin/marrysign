@@ -7,6 +7,12 @@ CurrencyConverter library allows to convert USD to ETH.
 Inspired by https://github.com/PatrickAlphaC/hardhat-fund-me-fcc/blob/main/contracts/PriceConverter.sol
 (by https://github.com/PatrickAlphaC).
 
+### MULTIPLIER
+
+```solidity
+uint256 MULTIPLIER
+```
+
 ### convertUSDToWei
 
 ```solidity
@@ -18,10 +24,17 @@ Convert integer USD amount to Wei.
 ### getETHPriceInUSD
 
 ```solidity
-function getETHPriceInUSD(contract AggregatorV3Interface priceFeed) private view returns (uint256)
+function getETHPriceInUSD(contract AggregatorV3Interface priceFeed) private view returns (uint256, uint256)
 ```
 
 Return current ETH price in USD (multiplied to 10**18).
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | (uint256, uint256) Latest ETH price in USD and the number of decimals. |
+| [1] | uint256 |  |
 
 ## MarrySign
 

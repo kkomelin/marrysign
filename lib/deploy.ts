@@ -37,10 +37,6 @@ const deployMockV3AggregatorContract = async () => {
 
   await contract.deployed()
 
-  console.log(
-    `MockV3Aggregator contract has been deployed to ${contract.address}`
-  )
-
   return { mockV3AggregatorContract: contract }
 }
 
@@ -52,8 +48,6 @@ const deployMarrySignContract = async (priceFeedAddress: string) => {
   const contract = await MarrySignContract.deploy(priceFeedAddress)
 
   await contract.deployed()
-
-  console.log(`MarrySign contract has been deployed to ${contract.address}`)
 
   return { marrySignContract: contract, owner, alice, bob }
 }

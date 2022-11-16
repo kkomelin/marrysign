@@ -3,6 +3,8 @@ pragma solidity ^0.8.9;
 
 import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 
+// import "hardhat/console.sol";
+
 /**
  * @notice CurrencyConverter library allows to convert USD to ETH.
  *
@@ -10,6 +12,9 @@ import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
  * (by https://github.com/PatrickAlphaC).
  */
 library CurrencyConverter {
+  // @dev A multiplier to support decimals.
+  uint256 private constant MULTIPLIER = 10**18;
+
   /**
    * @notice Convert integer USD amount to Wei.
    */
@@ -18,27 +23,25 @@ library CurrencyConverter {
     view
     returns (uint256)
   {
-    // Converting USD value to the common base 10**18 for the simplicity.
-    uint256 usdAmountCommonBased = usdAmount * 10**18;
+    (uint256 ethPrice, uint256 ethPriceDecimals) = getETHPriceInUSD(priceFeed);
 
-    uint256 ethPriceInUsdBased = getETHPriceInUSD(priceFeed);
-
-    return uint256((usdAmountCommonBased / ethPriceInUsdBased) * 10**18);
+    return
+      uint256(((usdAmount * MULTIPLIER) / (ethPrice / 10**ethPriceDecimals)));
   }
 
   /**
    * @notice Return current ETH price in USD (multiplied to 10**18).
+   * @return (uint256, uint256) Latest ETH price in USD and the number of decimals.
    */
   function getETHPriceInUSD(AggregatorV3Interface priceFeed)
     private
     view
-    returns (uint256)
+    returns (uint256, uint256)
   {
     (, int256 answer, , , ) = priceFeed.latestRoundData();
 
     uint256 decimals = priceFeed.decimals();
 
-    // To return a clear value from this method, we need to convert the value to our own common base 10**18.
-    return uint256((uint256(answer) / 10**decimals) * 10**18);
+    return (uint256(answer), decimals);
   }
 }
