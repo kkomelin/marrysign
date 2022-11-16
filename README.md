@@ -59,6 +59,6 @@ npm run compile
 npm run deploy
 ```
 
-# Code documentation
+## Code documentation
 
 Pleae find the generated code documentaiton [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
