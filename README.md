@@ -1,9 +1,17 @@
 # MarrySign (Backend) 
-MarrySign app allows a couple to give their marital vows to each other digitally.
+MarrySign app allows any couple to get married online.
 
 This repository contains the Blockchain/Backend part of the project which is aimed to be run on an Ethereum-compatible network.
 
 _It's developed during the [Chainlink Hackathon Fall 2022](https://hack.chain.link/) (Oct 14 - Nov 18, 2022)._
+
+## Install
+
+**Please note only NPM is supported.**
+
+```shell
+npm install
+```
 
 ## Test
 

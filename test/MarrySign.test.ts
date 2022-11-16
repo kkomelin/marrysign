@@ -3,11 +3,11 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { BytesLike } from 'ethers'
 import { ethers } from 'hardhat'
-import { MarrySign } from '../typechain'
+import { deployContracts } from '../lib/deploy'
+import { MarrySign, MockV3Aggregator } from '../typechain'
 import { EAgreementEventName } from '../types/EAgreementEventName'
 import { EAgreementState } from '../types/EAgreementState'
 import { ECustomContractError } from '../types/ECustomContractError'
-import { deployMarrySignContractFixture } from './utils/fixtures'
 import {
   nowTimestamp,
   stringToHex,
@@ -15,24 +15,29 @@ import {
 } from './utils/helpers'
 
 describe('MarrySign', () => {
-  let contract: MarrySign
+  let marrySignContract: MarrySign
   let owner: SignerWithAddress
   let alice: SignerWithAddress
   let bob: SignerWithAddress
+  let mockV3AggregatorContract: MockV3Aggregator
 
-  const terminationCost = 1000000
+  const terminationCostInUSD = 1000000
   const serviceFeePercent = 10 // Have to hardcode it here for now.
-  const serviceFee = terminationServiceFee(terminationCost, serviceFeePercent)
+  const serviceFee = terminationServiceFee(
+    terminationCostInUSD,
+    serviceFeePercent
+  )
 
   beforeEach(async () => {
-    const fixtureResults = await loadFixture(deployMarrySignContractFixture)
+    const results = await loadFixture(deployContracts)
 
-    contract = fixtureResults.contract
-    owner = fixtureResults.owner
-    alice = fixtureResults.alice
-    bob = fixtureResults.bob
+    marrySignContract = results.marrySignContract
+    owner = results.owner
+    alice = results.alice
+    bob = results.bob
+    mockV3AggregatorContract = results.mockV3AggregatorContract
 
-    return fixtureResults
+    return results
   })
 
   const _createAgreement = async (
@@ -66,7 +71,7 @@ describe('MarrySign', () => {
     await expect(
       contract
         .connect(alice)
-        .createAgreement(bob.address, content, terminationCost, createdAt)
+        .createAgreement(bob.address, content, terminationCostInUSD, createdAt)
     )
       .to.emit(contract, EAgreementEventName.AgreementCreated)
       .withArgs(captureId)
@@ -76,32 +81,36 @@ describe('MarrySign', () => {
     expect(agreement.bob).to.be.equal(bob.address)
     expect(agreement.state).to.be.equal(EAgreementState.Created)
     expect(agreement.updatedAt).to.be.equal(createdAt)
-    expect(agreement.terminationCost).to.be.equal(terminationCost)
+    expect(agreement.terminationCost).to.be.equal(terminationCostInUSD)
     expect(agreement.content).to.be.equal(content)
 
     return capturedId
   }
 
   describe('Contract: Deployment', () => {
-    it('Should revert if the passed ID does not exist', async () => {
-      const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
-
-      await expect(
-        contract.getAgreement(nonExistentId)
-      ).to.be.revertedWithCustomError(
-        contract,
-        ECustomContractError.AgreementNotFound
-      )
+    it('Should set the aggregator address correctly', async () => {
+      const response = await marrySignContract.getPriceFeed()
+      expect(response).to.be.equal(mockV3AggregatorContract.address)
     })
   })
 
   describe('Agreement: Getters', () => {
-    it("Should return the active agreement by Alice's address", async () => {
-      const id = await _createAgreement(contract, alice, bob)
+    it('Should revert if the passed ID does not exist', async () => {
+      const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
 
-      const agreement = await contract.callStatic.getAgreementByAddress(
-        alice.address
+      await expect(
+        marrySignContract.getAgreement(nonExistentId)
+      ).to.be.revertedWithCustomError(
+        marrySignContract,
+        ECustomContractError.AgreementNotFound
       )
+    })
+
+    it("Should return the active agreement by Alice's address", async () => {
+      const id = await _createAgreement(marrySignContract, alice, bob)
+
+      const agreement =
+        await marrySignContract.callStatic.getAgreementByAddress(alice.address)
       expect(id).to.be.equal(agreement.id)
       expect(agreement.alice).to.be.equal(alice.address)
       expect(agreement.bob).to.be.equal(bob.address)
@@ -109,11 +118,10 @@ describe('MarrySign', () => {
     })
 
     it("Should return the active agreement by Bob's address", async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
-      const agreement = await contract.callStatic.getAgreementByAddress(
-        bob.address
-      )
+      const agreement =
+        await marrySignContract.callStatic.getAgreementByAddress(bob.address)
       expect(id).to.be.equal(agreement.id)
       expect(agreement.alice).to.be.equal(alice.address)
       expect(agreement.bob).to.be.equal(bob.address)
@@ -121,16 +129,17 @@ describe('MarrySign', () => {
     })
 
     it('Should return all accepted agreements', async () => {
-      const id1 = await _createAgreement(contract, alice, bob)
-      await contract.connect(bob).acceptAgreement(id1, nowTimestamp())
+      const id1 = await _createAgreement(marrySignContract, alice, bob)
+      await marrySignContract.connect(bob).acceptAgreement(id1, nowTimestamp())
 
       // Creates an agreement in Created state which should be omitted from results.
-      await _createAgreement(contract, alice, bob)
+      await _createAgreement(marrySignContract, alice, bob)
 
-      const id3 = await _createAgreement(contract, alice, bob)
-      await contract.connect(bob).acceptAgreement(id3, nowTimestamp())
+      const id3 = await _createAgreement(marrySignContract, alice, bob)
+      await marrySignContract.connect(bob).acceptAgreement(id3, nowTimestamp())
 
-      const agreements = await contract.callStatic.getAcceptedAgreements()
+      const agreements =
+        await marrySignContract.callStatic.getAcceptedAgreements()
       expect(2).to.be.equal(agreements.length)
 
       const actualAgrement1 = agreements[0]
@@ -147,14 +156,14 @@ describe('MarrySign', () => {
     })
 
     it("Should not return an inactive agreement by Alice's address if the agreement has been refused already", async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
-      await contract.connect(bob).refuseAgreement(id, nowTimestamp())
+      await marrySignContract.connect(bob).refuseAgreement(id, nowTimestamp())
 
       await expect(
-        contract.callStatic.getAgreementByAddress(alice.address)
+        marrySignContract.callStatic.getAgreementByAddress(alice.address)
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AgreementNotFound
       )
     })
@@ -167,11 +176,11 @@ describe('MarrySign', () => {
       let createdAt = 0
 
       await expect(
-        contract
+        marrySignContract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.InvalidTimestamp
       )
 
@@ -180,11 +189,11 @@ describe('MarrySign', () => {
       createdAt = nowTimestamp()
 
       await expect(
-        contract
+        marrySignContract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.EmptyContent
       )
 
@@ -193,42 +202,42 @@ describe('MarrySign', () => {
       createdAt = nowTimestamp()
 
       await expect(
-        contract
+        marrySignContract
           .connect(alice)
           .createAgreement(bob.address, content, terminationCost, createdAt)
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.ZeroTerminationCost
       )
     })
 
     it('Should create an agreement and emit event for correct parameters', async () => {
-      await _createAgreement(contract, alice, bob)
+      await _createAgreement(marrySignContract, alice, bob)
 
-      const count = await contract.callStatic.getAgreementCount()
+      const count = await marrySignContract.callStatic.getAgreementCount()
       expect(count).to.be.equal(1)
     })
 
     it('Should create multiple agreements', async () => {
-      const id1 = await _createAgreement(contract, alice, bob)
-      const id2 = await _createAgreement(contract, alice, bob)
+      const id1 = await _createAgreement(marrySignContract, alice, bob)
+      const id2 = await _createAgreement(marrySignContract, alice, bob)
 
       // Should make sure that the ids are unique.
       expect(id1).to.be.not.equal(id2)
 
-      const count = await contract.callStatic.getAgreementCount()
+      const count = await marrySignContract.callStatic.getAgreementCount()
       expect(count).to.be.equal(2)
     })
   })
 
   describe('Agreement: Acceptance', () => {
     it('Should revert if Alice tries to accept an agreement', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(alice).acceptAgreement(id, nowTimestamp())
+        marrySignContract.connect(alice).acceptAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AccessDenied
       )
     })
@@ -237,22 +246,26 @@ describe('MarrySign', () => {
       const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
 
       await expect(
-        contract.connect(bob).acceptAgreement(nonExistentId, nowTimestamp())
+        marrySignContract
+          .connect(bob)
+          .acceptAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AgreementNotFound
       )
     })
 
     it('Bob should accept an agreement', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       const acceptedAt = nowTimestamp()
-      await expect(contract.connect(bob).acceptAgreement(id, acceptedAt))
-        .to.emit(contract, EAgreementEventName.AgreementAccepted)
+      await expect(
+        marrySignContract.connect(bob).acceptAgreement(id, acceptedAt)
+      )
+        .to.emit(marrySignContract, EAgreementEventName.AgreementAccepted)
         .withArgs(id)
 
-      const agreement = await contract.callStatic.getAgreement(id)
+      const agreement = await marrySignContract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(EAgreementState.Accepted)
       expect(agreement.updatedAt).to.be.equal(acceptedAt)
     })
@@ -263,46 +276,52 @@ describe('MarrySign', () => {
       const nonExistentId = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)
 
       await expect(
-        contract.connect(alice).refuseAgreement(nonExistentId, nowTimestamp())
+        marrySignContract
+          .connect(alice)
+          .refuseAgreement(nonExistentId, nowTimestamp())
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AgreementNotFound
       )
     })
 
     it('Should revert if it is refused by neither Alice or Bob', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(owner).refuseAgreement(id, nowTimestamp())
+        marrySignContract.connect(owner).refuseAgreement(id, nowTimestamp())
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AccessDenied
       )
     })
 
     it('Bob should be able to refuse their agreement', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       const refusedAt = nowTimestamp()
-      await expect(contract.connect(bob).refuseAgreement(id, refusedAt))
-        .to.emit(contract, EAgreementEventName.AgreementRefused)
+      await expect(
+        marrySignContract.connect(bob).refuseAgreement(id, refusedAt)
+      )
+        .to.emit(marrySignContract, EAgreementEventName.AgreementRefused)
         .withArgs(id)
 
-      const agreement = await contract.callStatic.getAgreement(id)
+      const agreement = await marrySignContract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(EAgreementState.Refused)
       expect(agreement.updatedAt).to.be.equal(refusedAt)
     })
 
     it('Alice should be able to refuse their agreement', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       const refusedAt = nowTimestamp()
-      await expect(contract.connect(alice).refuseAgreement(id, refusedAt))
-        .to.emit(contract, EAgreementEventName.AgreementRefused)
+      await expect(
+        marrySignContract.connect(alice).refuseAgreement(id, refusedAt)
+      )
+        .to.emit(marrySignContract, EAgreementEventName.AgreementRefused)
         .withArgs(id)
 
-      const agreement = await contract.callStatic.getAgreement(id)
+      const agreement = await marrySignContract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(2)
       expect(agreement.updatedAt).to.be.equal(refusedAt)
     })
@@ -310,77 +329,79 @@ describe('MarrySign', () => {
 
   describe('Agreement: Termination', () => {
     it('Should revert if it is terminated by neither Alice or Bob', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(owner).terminateAgreement(id)
+        marrySignContract.connect(owner).terminateAgreement(id)
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.AccessDenied
       )
     })
 
-    it('Should revert if no payment is performed', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+    it('Should revert if no funds are send', async () => {
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(bob).terminateAgreement(id)
+        marrySignContract.connect(bob).terminateAgreement(id)
       ).to.be.revertedWithCustomError(
-        contract,
-        ECustomContractError.MustPayExactTerminationCost
+        marrySignContract,
+        ECustomContractError.WrongAmount
       )
     })
 
     it('Bob should be able to terminate an agreement with penalty', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(bob).terminateAgreement(id, {
-          value: terminationCost,
+        marrySignContract.connect(bob).terminateAgreement(id, {
+          value: terminationCostInUSD,
         })
       )
-        .to.emit(contract, EAgreementEventName.AgreementTerminated)
+        .to.emit(marrySignContract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
           [bob, alice, owner],
-          [-terminationCost, terminationCost - serviceFee, serviceFee]
+          [-terminationCostInUSD, terminationCostInUSD - serviceFee, serviceFee]
         )
 
-      const agreement = await contract.callStatic.getAgreement(id)
+      const agreement = await marrySignContract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(EAgreementState.Terminated)
     })
 
     it('Alice should be able to terminate an agreement with penalty', async () => {
-      const id = await _createAgreement(contract, alice, bob)
+      const id = await _createAgreement(marrySignContract, alice, bob)
 
       await expect(
-        contract.connect(alice).terminateAgreement(id, {
-          value: terminationCost,
+        marrySignContract.connect(alice).terminateAgreement(id, {
+          value: terminationCostInUSD,
         })
       )
-        .to.emit(contract, EAgreementEventName.AgreementTerminated)
+        .to.emit(marrySignContract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
           [alice, bob, owner],
-          [-terminationCost, terminationCost - serviceFee, serviceFee]
+          [-terminationCostInUSD, terminationCostInUSD - serviceFee, serviceFee]
         )
 
-      const agreement = await contract.callStatic.getAgreement(id)
+      const agreement = await marrySignContract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(EAgreementState.Terminated)
     })
   })
 
   describe('Agreement: List of Accepted', () => {
     it('Should return only accepted agreements', async () => {
-      const id1 = await _createAgreement(contract, alice, bob)
-      const id2 = await _createAgreement(contract, alice, bob)
-      const id3 = await _createAgreement(contract, alice, bob)
+      const id1 = await _createAgreement(marrySignContract, alice, bob)
+      const id2 = await _createAgreement(marrySignContract, alice, bob)
+      const id3 = await _createAgreement(marrySignContract, alice, bob)
 
-      await expect(contract.connect(bob).acceptAgreement(id2, nowTimestamp()))
-        .to.emit(contract, EAgreementEventName.AgreementAccepted)
+      await expect(
+        marrySignContract.connect(bob).acceptAgreement(id2, nowTimestamp())
+      )
+        .to.emit(marrySignContract, EAgreementEventName.AgreementAccepted)
         .withArgs(id2)
 
-      const agreements = await contract.getAcceptedAgreements()
+      const agreements = await marrySignContract.getAcceptedAgreements()
       expect(agreements.length).to.be.equal(1)
 
       const agreement = agreements[0]
@@ -393,16 +414,18 @@ describe('MarrySign', () => {
   describe('Contract: Withdrawal', () => {
     it('Should revert if called by not the owner', async () => {
       await expect(
-        contract.connect(alice).withdraw()
+        marrySignContract.connect(alice).withdraw()
       ).to.be.revertedWithCustomError(
-        contract,
+        marrySignContract,
         ECustomContractError.CallerIsNotOwner
       )
     })
 
     it('Should not revert if called by the owner', async () => {
-      await expect(contract.withdraw()).to.changeEtherBalances([owner], [0]).not
-        .to.be.reverted
+      await expect(marrySignContract.withdraw()).to.changeEtherBalances(
+        [owner],
+        [0]
+      ).not.to.be.reverted
     })
   })
 })

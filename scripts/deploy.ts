@@ -1,17 +1,6 @@
-import { ethers } from 'hardhat'
+import { deployContracts } from '../lib/deploy'
 
-async function main() {
-  const MarrySignContract = await ethers.getContractFactory('MarrySign')
-  const deployingContract = await MarrySignContract.deploy()
-
-  await deployingContract.deployed()
-
-  console.log(
-    `MarrySign contract has been deployed to ${deployingContract.address}`
-  )
-}
-
-main()
+deployContracts()
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
