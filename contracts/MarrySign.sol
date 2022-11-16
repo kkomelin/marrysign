@@ -10,6 +10,7 @@ import './CurrencyConverter.sol';
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
 contract MarrySign {
+  /// @notice Import CurrencyConverter library.
   using CurrencyConverter for uint256;
 
   enum AgreementState {
@@ -19,6 +20,9 @@ contract MarrySign {
     Terminated
   }
 
+  /**
+   * @notice The Agreement structure is used to store agreement data.
+   */
   struct Agreement {
     /// @dev Unique hash of the agreement which is used as its ID.
     bytes32 id;
@@ -36,6 +40,9 @@ contract MarrySign {
     uint256 updatedAt;
   }
 
+  /**
+   * @notice The Pointer structure is used to detect deleted agreements. If Pointer.isSet == false, then it's a deleted agreement.
+   */
   struct Pointer {
     uint256 index;
     bool isSet;

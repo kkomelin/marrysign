@@ -13,6 +13,8 @@ Inspired by https://github.com/PatrickAlphaC/hardhat-fund-me-fcc/blob/main/contr
 uint256 MULTIPLIER
 ```
 
+_A multiplier which is used to support decimals._
+
 ### convertUSDToWei
 
 ```solidity
@@ -20,6 +22,12 @@ function convertUSDToWei(uint256 usdAmount, contract AggregatorV3Interface price
 ```
 
 Convert integer USD amount to Wei.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | {uint256} An amount in Wei. |
 
 ### getETHPriceInUSD
 
@@ -33,8 +41,8 @@ Return current ETH price in USD (multiplied to 10**18).
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | (uint256, uint256) Latest ETH price in USD and the number of decimals. |
-| [1] | uint256 |  |
+| [0] | uint256 | {uint256} Latest ETH price in USD. |
+| [1] | uint256 | {uint256} A number of decimals used to store the ETH price. |
 
 ## MarrySign
 

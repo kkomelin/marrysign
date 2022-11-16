@@ -12,11 +12,12 @@ import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
  * (by https://github.com/PatrickAlphaC).
  */
 library CurrencyConverter {
-  // @dev A multiplier to support decimals.
+  /// @dev A multiplier which is used to support decimals.
   uint256 private constant MULTIPLIER = 10**18;
 
   /**
    * @notice Convert integer USD amount to Wei.
+   * @return {uint256} An amount in Wei.
    */
   function convertUSDToWei(uint256 usdAmount, AggregatorV3Interface priceFeed)
     internal
@@ -31,7 +32,8 @@ library CurrencyConverter {
 
   /**
    * @notice Return current ETH price in USD (multiplied to 10**18).
-   * @return (uint256, uint256) Latest ETH price in USD and the number of decimals.
+   * @return {uint256} Latest ETH price in USD.
+   * @return {uint256} A number of decimals used to store the ETH price.
    */
   function getETHPriceInUSD(AggregatorV3Interface priceFeed)
     private
