@@ -100,6 +100,7 @@ contract MarrySign {
 
   /**
    * @notice Contract constructor.
+   * @param priceFeedAddress {address} Chainlink Price Feed address.
    */
   constructor(address priceFeedAddress) payable {
     priceFeed = AggregatorV3Interface(priceFeedAddress);

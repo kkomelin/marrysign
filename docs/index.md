@@ -1,5 +1,28 @@
 # Solidity API
 
+## CurrencyConverter
+
+CurrencyConverter library allows to convert USD to ETH.
+
+Inspired by https://github.com/PatrickAlphaC/hardhat-fund-me-fcc/blob/main/contracts/PriceConverter.sol
+(by https://github.com/PatrickAlphaC).
+
+### convertUSDToWei
+
+```solidity
+function convertUSDToWei(uint256 usdAmount, contract AggregatorV3Interface priceFeed) internal view returns (uint256)
+```
+
+Convert integer USD amount to Wei.
+
+### getETHPriceInUSD
+
+```solidity
+function getETHPriceInUSD(contract AggregatorV3Interface priceFeed) private view returns (uint256)
+```
+
+Return current ETH price in USD (multiplied to 10**18).
+
 ## MarrySign
 
 ### AgreementState
@@ -84,13 +107,13 @@ error AccessDenied()
 
 _When the caller is not authorized to call a function._
 
-### MustPayExactTerminationCost
+### WrongAmount
 
 ```solidity
-error MustPayExactTerminationCost()
+error WrongAmount()
 ```
 
-_We should check if the termination cost passed is equivalent to that the agreement creator set._
+_We check if the termination cost is close to what user pays on agreement termination. If not, we fire the error._
 
 ### AgreementNotFound
 
@@ -156,6 +179,14 @@ Is emitted when the agreement is terminated by any party.
 | ---- | ---- | ----------- |
 | id | bytes32 | {bytes32} The terminated agreement ID. |
 
+### ALLOWED_TERMINATION_COST_DIFFERENCE
+
+```solidity
+uint256 ALLOWED_TERMINATION_COST_DIFFERENCE
+```
+
+_Allowed termination cost set and paid difference in Wei. Because of the volatility._
+
 ### SERVICE_FEE_PERCENT
 
 ```solidity
@@ -196,13 +227,27 @@ uint256 randomFactor
 
 _Used for making Agreement.IDs trully unique._
 
+### priceFeed
+
+```solidity
+contract AggregatorV3Interface priceFeed
+```
+
+_Chainlink DataFeed client._
+
 ### constructor
 
 ```solidity
-constructor() public payable
+constructor(address priceFeedAddress) public payable
 ```
 
 Contract constructor.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| priceFeedAddress | address | {address} Chainlink Price Feed address. |
 
 ### getAgreementCount
 
@@ -315,6 +360,22 @@ function terminateAgreement(bytes32 id) public payable
 ```solidity
 function withdraw() public
 ```
+
+### getPriceFeedVersion
+
+```solidity
+function getPriceFeedVersion() public view returns (uint256)
+```
+
+Get Chainlink PriceFeed version.
+
+### getPriceFeed
+
+```solidity
+function getPriceFeed() public view returns (contract AggregatorV3Interface)
+```
+
+Get Chainlink PriceFeed instance.
 
 ### generateAgreementId
 
