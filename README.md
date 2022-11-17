@@ -74,7 +74,7 @@ The auto-generated code documentaiton is [here](https://github.com/kkomelin/marr
 
 ## Known Issues
 
-- Cannot terminate an agreement on Goerli #1
+- [Cannot terminate an agreement on Goerli #1](https://github.com/kkomelin/marrysign/issues/1)
 
 ## Bugs, typos and suggestions
 
