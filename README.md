@@ -67,3 +67,7 @@ npm run deploy
 ## Code documentation
 
 Pleae find the generated code documentaiton [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
+
+## Bugs, typos and suggestions
+
+You're very welcome with your bug reports and suggestions here in the [issue queue](https://github.com/kkomelin/marrysign/issues), or just drop Konstantin a line on Twitter [@kkomelin](https://twitter.com/kkomelin).
