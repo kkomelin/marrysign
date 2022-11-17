@@ -72,6 +72,10 @@ npm run deploy
 
 The auto-generated code documentaiton is [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
 
+## Known Issues
+
+[#1]
+
 ## Bugs, typos and suggestions
 
 You're very welcome with your bug reports and suggestions here in the [issue queue](https://github.com/kkomelin/marrysign/issues/new), or just drop [Konstantin](https://github.com/kkomelin) a line on Twitter [@kkomelin](https://twitter.com/kkomelin).
