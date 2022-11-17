@@ -6,6 +6,7 @@
     "network": "hardhat node",
     "compile": "hardhat compile",
     "deploy": "hardhat run --network localhost scripts/deploy.ts",
+    "deploy:goerli": "hardhat run --network goerli scripts/deploy.ts",
     "lint": "solhint 'contracts/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "test": "hardhat test",

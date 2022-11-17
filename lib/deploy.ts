@@ -11,11 +11,11 @@ export async function deployContracts() {
 
   // If it's a local development network, deploy mocks.
   if (localNetworks.includes(network.name)) {
-    resultsAC = await deployMockV3AggregatorContract()
-    priceFeedAddress = resultsAC.mockV3AggregatorContract.address
+    resultsAC = await deployv3AggregatorContract()
+    priceFeedAddress = resultsAC.v3AggregatorContract.address
   } else {
     priceFeedAddress = extraNetworkConfig.goerli.ethUsdPriceFeed
-    resultsAC = { mockV3AggregatorContract: { address: priceFeedAddress } }
+    resultsAC = { v3AggregatorContract: { address: priceFeedAddress } }
   }
   // @todo: Add priceFeedAddress for production.
 
@@ -27,18 +27,22 @@ export async function deployContracts() {
   }
 }
 
-const deployMockV3AggregatorContract = async () => {
-  const MockV3AggregatorContract = await ethers.getContractFactory(
+const deployv3AggregatorContract = async () => {
+  const v3AggregatorContract = await ethers.getContractFactory(
     'MockV3Aggregator'
   )
-  const contract = await MockV3AggregatorContract.deploy(
+  const contract = await v3AggregatorContract.deploy(
     MOCK_PRICE_FEED_DECIMALS,
     MOCK_PRICE_FEED_INITIAL_PRICE
   )
 
   await contract.deployed()
 
-  return { mockV3AggregatorContract: contract }
+  // @todo: Don't display when in tests.
+  console.log(
+    `MockV3Aggregator contract has been deployed to ${contract.address}`
+  )
+  return { v3AggregatorContract: contract }
 }
 
 const deployMarrySignContract = async (priceFeedAddress: string) => {
@@ -49,6 +53,9 @@ const deployMarrySignContract = async (priceFeedAddress: string) => {
   const contract = await MarrySignContract.deploy(priceFeedAddress)
 
   await contract.deployed()
+
+  // @todo: Don't display when in tests.
+  console.log(`MarrySign contract has been deployed to ${contract.address}`)
 
   return { marrySignContract: contract, owner, alice, bob }
 }

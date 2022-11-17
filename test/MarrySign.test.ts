@@ -20,7 +20,7 @@ describe('MarrySign', () => {
   let owner: SignerWithAddress
   let alice: SignerWithAddress
   let bob: SignerWithAddress
-  let mockV3AggregatorContract: MockV3Aggregator
+  let v3AggregatorContract: MockV3Aggregator
 
   const terminationCostInUSD = 10 // 1000000
   const serviceFeePercent = 10 // Have to hardcode it here for now.
@@ -32,7 +32,7 @@ describe('MarrySign', () => {
     owner = results.owner
     alice = results.alice
     bob = results.bob
-    mockV3AggregatorContract = results.mockV3AggregatorContract
+    v3AggregatorContract = results.v3AggregatorContract
 
     return results
   })
@@ -87,7 +87,7 @@ describe('MarrySign', () => {
   describe('Contract: Deployment', () => {
     it('Should set the aggregator address correctly', async () => {
       const response = await marrySignContract.getPriceFeed()
-      expect(response).to.be.equal(mockV3AggregatorContract.address)
+      expect(response).to.be.equal(v3AggregatorContract.address)
     })
   })
 
@@ -354,8 +354,8 @@ describe('MarrySign', () => {
         bob
       )
 
-      const ethPrice = await mockV3AggregatorContract.latestAnswer()
-      const ethPriceDecimals = await mockV3AggregatorContract.decimals()
+      const ethPrice = await v3AggregatorContract.latestAnswer()
+      const ethPriceDecimals = await v3AggregatorContract.decimals()
 
       const serviceFeeInUsd = terminationServiceFeeInUsd(
         Number(terminationCost),
@@ -401,8 +401,8 @@ describe('MarrySign', () => {
         bob
       )
 
-      const ethPrice = await mockV3AggregatorContract.latestAnswer()
-      const ethPriceDecimals = await mockV3AggregatorContract.decimals()
+      const ethPrice = await v3AggregatorContract.latestAnswer()
+      const ethPriceDecimals = await v3AggregatorContract.decimals()
 
       const serviceFeeInUsd = terminationServiceFeeInUsd(
         Number(terminationCost),

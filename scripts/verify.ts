@@ -1,30 +1,18 @@
 import { network, run } from 'hardhat'
 import { localNetworks } from '../hardhat.config.extra'
-import { deployContracts } from '../lib/deploy'
-require('dotenv').config()
+
+/// This script is to verify the contract on Etherscan after deployment.
+
+const v3AggregatorContractAddress = '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e'
+const marrySignContractAddress = '0xCce4880C3DAf296d87FE710953E12D008608C6A2'
 
 async function main() {
-  const results = await deployContracts()
-
-  await verify(
-    results.marrySignContract.address,
-    results.v3AggregatorContract.address
-  )
-}
-
-async function verify(
-  marrySignContractAddress: string,
-  v3AggregatorContractAddress: string
-) {
   if (!localNetworks.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
     await run('verify:verify', {
       address: marrySignContractAddress,
       constructorArguments: [v3AggregatorContractAddress],
     })
-    return
   }
-
-  console.log('Skip verifying the contract for local networks.')
 }
 
 main()
