@@ -9,6 +9,10 @@ _The project is developed during [Chainlink Hackathon Fall 2022](https://hack.ch
 
 [MarrySign.com](https://marrysign.com/) (Goerli network)
 
+## Frontend Part
+
+[kkomelin/marrysign-com](https://github.com/kkomelin/marrysign-com)
+
 ## Chainlink Services Used
 
 We receive agreement termination cost from user in USD and store it on chain in USD (see `Agreement.terminationCost` in [kkomelin/marrysign/contracts/MarrySign.sol](https://github.com/kkomelin/marrysign/blob/main/contracts/MarrySign.sol) ), so Chainlink Price Feed is used to convert the termination cost to ETH on agreement termination in the `MarrySign.terminateAgreement()` function of the contract as well as on the front-end level.
