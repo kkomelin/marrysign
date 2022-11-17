@@ -64,7 +64,7 @@ npm run deploy
 
 ## Code documentation
 
-The auto-generated code documentaiton [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
+The auto-generated code documentaiton is [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
 
 ## Bugs, typos and suggestions
 
