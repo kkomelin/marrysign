@@ -74,7 +74,7 @@ The auto-generated code documentaiton is [here](https://github.com/kkomelin/marr
 
 ## Known Issues
 
-[#1]
+- Cannot terminate an agreement on Goerli #1
 
 ## Bugs, typos and suggestions
 
