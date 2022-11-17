@@ -7,7 +7,7 @@ _The project is developed during [Chainlink Hackathon Fall 2022](https://hack.ch
 
 ## Demo
 
-[MarrySign.com](https://marrysign.com/) **(Goerli network only atm)**
+[MarrySign.com](https://marrysign.com/) (Goerli network)
 
 ## Chainlink Services Used
 
@@ -19,7 +19,7 @@ On the front-end level, we display ETH equivalent of the USD amount on the Creat
 
 ## Configuration
 
-See [kkomelin/marrysign/.example.env](https://github.com/kkomelin/marrysign/.example.env) for reference.
+See [kkomelin/marrysign.com/.example.env](https://github.com/kkomelin/marrysign/blob/main/.example.env) for reference.
 
 TBC
 
@@ -66,8 +66,8 @@ npm run deploy
 
 ## Code documentation
 
-Pleae find the generated code documentaiton [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
+The auto-generated code documentaiton [here](https://github.com/kkomelin/marrysign/blob/main/docs/index.md)
 
 ## Bugs, typos and suggestions
 
-You're very welcome with your bug reports and suggestions here in the [issue queue](https://github.com/kkomelin/marrysign/issues), or just drop Konstantin a line on Twitter [@kkomelin](https://twitter.com/kkomelin).
+You're very welcome with your bug reports and suggestions here in the [issue queue](https://github.com/kkomelin/marrysign/issues), or just drop [Konstantin](https://github.com/kkomelin) a line on Twitter [@kkomelin](https://twitter.com/kkomelin).
