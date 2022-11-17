@@ -3,7 +3,7 @@ MarrySign app allows any couple to get married online.
 
 This repository contains the blockchain/back-end part of the project which is developed with Solidity and Hardhat, and is aimed to be deployed on an Ethereum-compatible network (currently Goerli).
 
-_The project is developed during [Chainlink Hackathon Fall 2022](https://hack.chain.link/) (Oct 14 - Nov 18, 2022)._
+_The project is developed during [Chainlink Hackathon Fall 2022](https://hack.chain.link/?utm_source=marrysign) (Oct 14 - Nov 18, 2022)._
 
 ## Demo
 
