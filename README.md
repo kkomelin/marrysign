@@ -1,5 +1,5 @@
 # MarrySign (Backend) 
-MarrySign app allows any couple to get married online.
+MarrySign app allows any couple regardless of time, age, location, culture or gender to get married online. Our marital agreements are stored on Blockchain, which makes them indestructible and verifiable.
 
 This repository contains the blockchain/back-end part of the project which is developed with Solidity and Hardhat, and is aimed to be deployed on an Ethereum-compatible network (currently Goerli).
 
