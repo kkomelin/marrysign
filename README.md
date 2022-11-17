@@ -25,6 +25,8 @@ On the front-end level, we display ETH equivalent of the USD amount on the Creat
 
 See [kkomelin/marrysign/.example.env](https://github.com/kkomelin/marrysign/blob/main/.example.env) for reference.
 
+Copy `.example.env` to `.env` and update the variables with your values.
+
 ## Installation
 
 **Please note only NPM is supported at the moment.**
