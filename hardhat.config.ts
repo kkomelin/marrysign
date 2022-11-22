@@ -12,11 +12,19 @@ const MAINNET_RPC_URL =
 const GOERLI_RPC_URL =
   process.env.GOERLI_RPC_URL ||
   'https://eth-goerli.alchemyapi.io/v2/your-api-key'
-const PRIVATE_KEY = process.env.PRIVATE_KEY
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY || 'Your private account key'
 
 // Your API key for Etherscan, obtain one at https://etherscan.io/
 const ETHERSCAN_API_KEY =
   process.env.ETHERSCAN_API_KEY || 'Your etherscan API key'
+
+const POLYGON_MUMBAI_RPC_URL =
+  process.env.POLYGON_MUMBAI_RPC_URL ||
+  'https://fluent-multi-research.matic-testnet.discover.quiknode.pro/your-api-key'
+
+const POLYGONSCAN_API_KEY =
+  process.env.POLYGONSCAN_API_KEY || 'Your etherscan API key'
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -55,11 +63,16 @@ const config: HardhatUserConfig = {
       //   },
       chainId: 1,
     },
+    polygonMumbai: {
+      url: POLYGON_MUMBAI_RPC_URL,
+      accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+    },
   },
   etherscan: {
     // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
     apiKey: {
       goerli: ETHERSCAN_API_KEY,
+      polygonMumbai: POLYGONSCAN_API_KEY,
     },
   },
 }

@@ -14,7 +14,17 @@ export async function deployContracts() {
     resultsAC = await deployv3AggregatorContract()
     priceFeedAddress = resultsAC.v3AggregatorContract.address
   } else {
-    priceFeedAddress = extraNetworkConfig.goerli.ethUsdPriceFeed
+    priceFeedAddress = extraNetworkConfig[network.name]?.ethUsdPriceFeed
+    if (priceFeedAddress == null) {
+      throw new Error(
+        'Please set ethUsdPriceFeed contract address in your hardhat.config.extra.ts'
+      )
+    }
+
+    console.log(
+      `The official V3Aggregator contract has been used from ${priceFeedAddress}`
+    )
+
     resultsAC = { v3AggregatorContract: { address: priceFeedAddress } }
   }
   // @todo: Add priceFeedAddress for production.

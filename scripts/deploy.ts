@@ -16,7 +16,10 @@ async function verify(
   marrySignContractAddress: string,
   v3AggregatorContractAddress: string
 ) {
-  if (!localNetworks.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+  if (
+    !localNetworks.includes(network.name) &&
+    (process.env.ETHERSCAN_API_KEY || process.env.POLYGONSCAN_API_KEY)
+  ) {
     await run('verify:verify', {
       address: marrySignContractAddress,
       constructorArguments: [v3AggregatorContractAddress],
