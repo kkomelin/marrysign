@@ -13,19 +13,11 @@ export const nowTimestamp = (): number => {
   return Math.round(Date.now() / 1000)
 }
 
-export const terminationServiceFeeInUsd = (
-  terminationCost: number,
+export const terminationServiceFee = (
+  terminationCost: BigNumber,
   serviceFeePercent: number
-): number => {
-  return (terminationCost * serviceFeePercent) / 100
-}
-
-export const usdToWei = (
-  usdAmount: number,
-  ethPrice: BigNumber,
-  ethPriceDecimals: number
 ): BigNumber => {
-  return BigNumber.from((usdAmount * Math.pow(10, 18)).toString()).div(
-    ethPrice.div(Math.pow(10, ethPriceDecimals))
-  )
+  return terminationCost
+    .mul(ethers.BigNumber.from(serviceFeePercent))
+    .div(ethers.BigNumber.from(100))
 }

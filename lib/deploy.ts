@@ -1,71 +1,20 @@
-import { ethers, network } from 'hardhat'
-import {
-  MOCK_PRICE_FEED_DECIMALS,
-  MOCK_PRICE_FEED_INITIAL_PRICE,
-} from '../config/main'
-import { extraNetworkConfig, localNetworks } from '../hardhat.config.extra'
+import { ethers } from 'hardhat'
 
 export async function deployContracts() {
-  let priceFeedAddress = ''
-  let resultsAC: any = {}
-
-  // If it's a local development network, deploy mocks.
-  if (localNetworks.includes(network.name)) {
-    resultsAC = await deployv3AggregatorContract()
-    priceFeedAddress = resultsAC.v3AggregatorContract.address
-  } else {
-    priceFeedAddress = extraNetworkConfig[network.name]?.ethUsdPriceFeed
-    if (priceFeedAddress == null) {
-      throw new Error(
-        'Please set ethUsdPriceFeed contract address in your hardhat.config.extra.ts'
-      )
-    }
-
-    console.log(
-      `The official V3Aggregator contract has been used from ${priceFeedAddress}`
-    )
-
-    resultsAC = { v3AggregatorContract: { address: priceFeedAddress } }
-  }
-  // @todo: Add priceFeedAddress for production.
-
-  const resultsMS = await deployMarrySignContract(priceFeedAddress)
-
-  return {
-    ...resultsAC,
-    ...resultsMS,
-  }
+  return await deployMarrySignContract()
 }
 
-const deployv3AggregatorContract = async () => {
-  const v3AggregatorContract = await ethers.getContractFactory(
-    'MockV3Aggregator'
-  )
-  const contract = await v3AggregatorContract.deploy(
-    MOCK_PRICE_FEED_DECIMALS,
-    MOCK_PRICE_FEED_INITIAL_PRICE
-  )
-
-  await contract.deployed()
-
-  // @todo: Don't display when in tests.
-  console.log(
-    `MockV3Aggregator contract has been deployed to ${contract.address}`
-  )
-  return { v3AggregatorContract: contract }
-}
-
-const deployMarrySignContract = async (priceFeedAddress: string) => {
+const deployMarrySignContract = async () => {
   // Contracts are deployed using the first signer/account by default.
   const [owner, alice, bob] = await ethers.getSigners()
 
   const MarrySignContract = await ethers.getContractFactory('MarrySign')
-  const contract = await MarrySignContract.deploy(priceFeedAddress)
+  const contract = await MarrySignContract.deploy()
 
   await contract.deployed()
 
   // @todo: Don't display when in tests.
   console.log(`MarrySign contract has been deployed to ${contract.address}`)
 
-  return { marrySignContract: contract, owner, alice, bob }
+  return { contract, owner, alice, bob }
 }

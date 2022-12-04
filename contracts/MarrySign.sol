@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
-import './CurrencyConverter.sol';
-
 // import "hardhat/console.sol";
 
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
 contract MarrySign {
-  /// @notice Import CurrencyConverter library.
-  using CurrencyConverter for uint256;
-
   enum AgreementState {
     Created,
     Accepted,
@@ -32,7 +26,7 @@ contract MarrySign {
     address bob;
     /// @dev Vow text.
     bytes content;
-    /// @dev A penalty which the one pays for agreement termination. USD * 10**2
+    /// @dev A penalty which the one pays for agreement termination (in Wei).
     uint256 terminationCost;
     /// @dev Agreement status.
     AgreementState state;
@@ -60,8 +54,8 @@ contract MarrySign {
   error InvalidTimestamp();
   /// @dev When the caller is not authorized to call a function.
   error AccessDenied();
-  /// @dev We check if the termination cost is close to what user pays on agreement termination. If not, we fire the error.
-  error WrongAmount();
+  /// @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
+  error MustPayExactTerminationCost();
   /// @dev if there is no an active agreement by given criteria.
   error AgreementNotFound();
 
@@ -86,9 +80,6 @@ contract MarrySign {
    */
   event AgreementTerminated(bytes32 id);
 
-  /// @dev Allowed termination cost set and paid difference in Wei. Because of the volatility.
-  uint256 public constant ALLOWED_TERMINATION_COST_DIFFERENCE = 1000;
-
   /// @dev We charge this percent of the termination cost for our service.
   uint8 private constant SERVICE_FEE_PERCENT = 10;
 
@@ -102,15 +93,10 @@ contract MarrySign {
   /// @dev Used for making Agreement.IDs trully unique.
   uint256 private randomFactor;
 
-  /// @dev Chainlink DataFeed client.
-  AggregatorV3Interface private priceFeed;
-
   /**
    * @notice Contract constructor.
-   * @param priceFeedAddress {address} Chainlink Price Feed address.
    */
-  constructor(address priceFeedAddress) payable {
-    priceFeed = AggregatorV3Interface(priceFeedAddress);
+  constructor() payable {
     owner = payable(msg.sender);
   }
 
@@ -145,11 +131,9 @@ contract MarrySign {
    * @param partnerAddress {address} Partner's address.
    * @return {Agreement}
    */
-  function getAgreementByAddress(address partnerAddress)
-    public
-    view
-    returns (Agreement memory)
-  {
+  function getAgreementByAddress(
+    address partnerAddress
+  ) public view returns (Agreement memory) {
     for (uint256 i = 0; i < getAgreementCount(); i++) {
       if (
         agreements[i].state != AgreementState.Created &&
@@ -257,10 +241,10 @@ contract MarrySign {
    * @param id {bytes32} The agreement ID.
    * @param acceptedAt {uint256} The acceptance date in seconds since the Unix epoch.
    */
-  function acceptAgreement(bytes32 id, uint256 acceptedAt)
-    public
-    validTimestamp(acceptedAt)
-  {
+  function acceptAgreement(
+    bytes32 id,
+    uint256 acceptedAt
+  ) public validTimestamp(acceptedAt) {
     Agreement memory agreement = getAgreement(id);
 
     if (msg.sender != agreement.bob) {
@@ -278,10 +262,10 @@ contract MarrySign {
    * @param id {bytes3} The agreement ID.
    * @param refusedAt {uint256} The refusal date in seconds since the Unix epoch.
    */
-  function refuseAgreement(bytes32 id, uint256 refusedAt)
-    public
-    validTimestamp(refusedAt)
-  {
+  function refuseAgreement(
+    bytes32 id,
+    uint256 refusedAt
+  ) public validTimestamp(refusedAt) {
     Agreement memory agreement = getAgreement(id);
 
     if (agreement.bob != msg.sender && agreement.alice != msg.sender) {
@@ -305,27 +289,19 @@ contract MarrySign {
       revert AccessDenied();
     }
 
-    uint256 terminationCostInWei = CurrencyConverter.convertUSDToWei(
-      agreement.terminationCost,
-      priceFeed
-    );
-
-    // Make sure user pays the correct termination cost (taking into account the allowed difference).
-    if (
-      msg.value < terminationCostInWei - ALLOWED_TERMINATION_COST_DIFFERENCE ||
-      msg.value > terminationCostInWei + ALLOWED_TERMINATION_COST_DIFFERENCE
-    ) {
-      revert WrongAmount();
+    // Make sure the requested compensation matches that which is stated in the agreement.
+    if (msg.value != agreement.terminationCost) {
+      revert MustPayExactTerminationCost();
     }
 
-    // Calculate and transfer our service fees.
-    uint256 fee = (terminationCostInWei * SERVICE_FEE_PERCENT) / 100;
+    // Deduct our service fee.
+    uint256 fee = (msg.value * SERVICE_FEE_PERCENT) / 100;
     if (fee != 0) {
       owner.transfer(fee);
     }
 
     // Pay the rest to the oposite partner.
-    uint256 compensation = terminationCostInWei - fee;
+    uint256 compensation = msg.value - fee;
     if (agreement.alice == msg.sender) {
       // Alice pays Bob the compensation.
       payable(agreement.bob).transfer(compensation);
@@ -347,20 +323,6 @@ contract MarrySign {
    */
   function withdraw() public onlyOwner {
     owner.transfer(address(this).balance);
-  }
-
-  /**
-   * @notice Get Chainlink PriceFeed version.
-   */
-  function getPriceFeedVersion() public view returns (uint256) {
-    return getPriceFeed().version();
-  }
-
-  /**
-   * @notice Get Chainlink PriceFeed instance.
-   */
-  function getPriceFeed() public view returns (AggregatorV3Interface) {
-    return priceFeed;
   }
 
   /**

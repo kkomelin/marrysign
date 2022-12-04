@@ -1,11 +1,7 @@
 # MarrySign (Backend) 
 MarrySign app allows any couple regardless of time, age, location, culture or gender to get married online. Our marital agreements are stored on Blockchain, which makes them indestructible and verifiable.
 
-_The first version of the project has been developed during [Chainlink Hackathon Fall 2022](https://devpost.com/software/marrysign) (Oct 14 - Nov 18, 2022)._
-
-## Demo
-
-[MarrySign.com](https://marrysign.com/) (Goerli network)
+_The initial version of this project has been developed during [Chainlink Hackathon Fall 2022](https://devpost.com/software/marrysign) (Oct 14 - Nov 18, 2022)._
 
 ## Configuration
 
