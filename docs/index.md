@@ -92,6 +92,14 @@ error MustPayExactTerminationCost()
 
 _We should check if the termination cost passed is equivalent to that the agreement creator set._
 
+### MustPayExactFee
+
+```solidity
+error MustPayExactFee()
+```
+
+_We should check if the amount passed is equivalent to our fee value._
+
 ### AgreementNotFound
 
 ```solidity
@@ -156,14 +164,6 @@ Is emitted when the agreement is terminated by any party.
 | ---- | ---- | ----------- |
 | id | bytes32 | {bytes32} The terminated agreement ID. |
 
-### SERVICE_FEE_PERCENT
-
-```solidity
-uint8 SERVICE_FEE_PERCENT
-```
-
-_We charge this percent of the termination cost for our service._
-
 ### owner
 
 ```solidity
@@ -171,6 +171,14 @@ address payable owner
 ```
 
 _The contract owner._
+
+### fee
+
+```solidity
+uint256 fee
+```
+
+_Our fee in Wei._
 
 ### agreements
 
@@ -278,10 +286,10 @@ _@todo: Optimize : there are two similar loops.
 ### createAgreement
 
 ```solidity
-function createAgreement(address bob, bytes content, uint256 terminationCost, uint256 createdAt) public
+function createAgreement(address bob, bytes content, uint256 terminationCost, uint256 createdAt) public payable
 ```
 
-Create a new agreement.
+Create a new agreement and pay the service fee if set.
 
 #### Parameters
 
@@ -295,7 +303,7 @@ Create a new agreement.
 ### acceptAgreement
 
 ```solidity
-function acceptAgreement(bytes32 id, uint256 acceptedAt) public
+function acceptAgreement(bytes32 id, uint256 acceptedAt) public payable
 ```
 
 ### refuseAgreement
@@ -314,6 +322,12 @@ function terminateAgreement(bytes32 id) public payable
 
 ```solidity
 function withdraw() public
+```
+
+### setFee
+
+```solidity
+function setFee(uint256 newFee) public
 ```
 
 ### generateAgreementId
