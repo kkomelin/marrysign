@@ -56,6 +56,8 @@ contract MarrySign {
   error AccessDenied();
   /// @dev We should check if the termination cost passed is equivalent to that the agreement creator set.
   error MustPayExactTerminationCost();
+  /// @dev We should check if the amount passed is equivalent to our fee value.
+  error MustPayExactFee();
   /// @dev if there is no an active agreement by given criteria.
   error AgreementNotFound();
 
@@ -80,11 +82,12 @@ contract MarrySign {
    */
   event AgreementTerminated(bytes32 id);
 
-  /// @dev We charge this percent of the termination cost for our service.
-  uint8 private constant SERVICE_FEE_PERCENT = 10;
-
   /// @dev The contract owner.
   address payable private owner;
+
+  /// @dev Our fee in Wei.
+  uint256 private fee = 0;
+
   /// @dev List of all agreements created.
   Agreement[] private agreements;
   /// @dev Maps Agreement.id to Agreement index for easier navigation.
@@ -186,7 +189,7 @@ contract MarrySign {
   }
 
   /**
-   * @notice Create a new agreement.
+   * @notice Create a new agreement and pay the service fee if set.
    * @param bob {address} The second party's adddress.
    * @param content {bytes} The vow content.
    * @param terminationCost {uint256} The agreement termination cost.
@@ -197,7 +200,7 @@ contract MarrySign {
     bytes memory content,
     uint256 terminationCost,
     uint256 createdAt
-  ) public validTimestamp(createdAt) {
+  ) public payable validTimestamp(createdAt) {
     if (content.length == 0) {
       revert EmptyContent();
     }
@@ -206,6 +209,16 @@ contract MarrySign {
     }
     if (terminationCost == 0) {
       revert ZeroTerminationCost();
+    }
+
+    // Make sure the sent amount is the same as our fee value.
+    if (msg.value != fee) {
+      revert MustPayExactFee();
+    }
+
+    // Charge our fee if set.
+    if (fee != 0) {
+      owner.transfer(fee);
     }
 
     // Every agreement gets its own randomFactor to make sure all agreements have unique IDs.
@@ -237,18 +250,28 @@ contract MarrySign {
   }
 
   /*
-   * @notice Accept the agreement by the second party (Bob).
+   * @notice Accept the agreement and pay the service fee (if set).
    * @param id {bytes32} The agreement ID.
    * @param acceptedAt {uint256} The acceptance date in seconds since the Unix epoch.
    */
   function acceptAgreement(
     bytes32 id,
     uint256 acceptedAt
-  ) public validTimestamp(acceptedAt) {
+  ) public payable validTimestamp(acceptedAt) {
     Agreement memory agreement = getAgreement(id);
 
     if (msg.sender != agreement.bob) {
       revert AccessDenied();
+    }
+
+    // Make sure the sent amount is the same as our fee value.
+    if (msg.value != fee) {
+      revert MustPayExactFee();
+    }
+
+    // Charge our fee if set.
+    if (fee != 0) {
+      owner.transfer(fee);
     }
 
     agreements[pointers[id].index].state = AgreementState.Accepted;
@@ -294,20 +317,13 @@ contract MarrySign {
       revert MustPayExactTerminationCost();
     }
 
-    // Deduct our service fee.
-    uint256 fee = (msg.value * SERVICE_FEE_PERCENT) / 100;
-    if (fee != 0) {
-      owner.transfer(fee);
-    }
-
-    // Pay the rest to the oposite partner.
-    uint256 compensation = msg.value - fee;
+    // Pay compensation to the opposite partner.
     if (agreement.alice == msg.sender) {
       // Alice pays Bob the compensation.
-      payable(agreement.bob).transfer(compensation);
+      payable(agreement.bob).transfer(msg.value);
     } else {
       // Bob pays Alice the compensation.
-      payable(agreement.alice).transfer(compensation);
+      payable(agreement.alice).transfer(msg.value);
     }
 
     delete agreements[pointers[id].index];
@@ -323,6 +339,14 @@ contract MarrySign {
    */
   function withdraw() public onlyOwner {
     owner.transfer(address(this).balance);
+  }
+
+  /*
+   * @notice Set our fee.
+   * @param newFee {uint256} Our fee in Wei.
+   */
+  function setFee(uint256 newFee) public onlyOwner {
+    fee = newFee;
   }
 
   /**
