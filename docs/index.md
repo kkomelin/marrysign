@@ -178,7 +178,7 @@ _The contract owner._
 uint256 fee
 ```
 
-_Our fee in Wei._
+_Our fee in Wei. 0 by default._
 
 ### agreements
 
@@ -212,13 +212,19 @@ constructor() public payable
 
 Contract constructor.
 
+### getFee
+
+```solidity
+function getFee() public view returns (uint256)
+```
+
 ### getAgreementCount
 
 ```solidity
 function getAgreementCount() public view returns (uint256)
 ```
 
-Get the number of all created agreements.
+Get the number of all agreements.
 
 #### Return Values
 
@@ -266,13 +272,27 @@ Get an agreement by an address of one of the partners.
 | ---- | ---- | ----------- |
 | [0] | struct MarrySign.Agreement | {Agreement} |
 
+### getAcceptedAgreementCount
+
+```solidity
+function getAcceptedAgreementCount() public view returns (uint256)
+```
+
+Get the number of accepted agreements.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | {uint256} |
+
 ### getAcceptedAgreements
 
 ```solidity
 function getAcceptedAgreements() public view returns (struct MarrySign.Agreement[])
 ```
 
-Get accepted (public) agreements.
+Get accepted agreements.
 
 _@todo: Optimize : there are two similar loops.
 @todo: Add pagination to not go over time/size limits._
@@ -327,7 +347,7 @@ function withdraw() public
 ### setFee
 
 ```solidity
-function setFee(uint256 newFee) public
+function setFee(uint256 _fee) public
 ```
 
 ### generateAgreementId
