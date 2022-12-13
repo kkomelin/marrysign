@@ -85,7 +85,7 @@ contract MarrySign {
   /// @dev The contract owner.
   address payable private owner;
 
-  /// @dev Our fee in Wei.
+  /// @dev Our fee in Wei. 0 by default.
   uint256 private fee = 0;
 
   /// @dev List of all agreements created.
@@ -103,8 +103,16 @@ contract MarrySign {
     owner = payable(msg.sender);
   }
 
+  /*
+   * @notice Get service fee.
+   * @return newFee {uint256} Our fee in Wei.
+   */
+  function getFee() public view returns (uint256) {
+    return fee;
+  }
+
   /**
-   * @notice Get the number of all created agreements.
+   * @notice Get the number of all agreements.
    * @return {uint256}
    */
   function getAgreementCount() public view returns (uint256) {
@@ -157,12 +165,10 @@ contract MarrySign {
   }
 
   /**
-   * @notice Get accepted (public) agreements.
-   * @dev @todo: Optimize : there are two similar loops.
-   * @dev @todo: Add pagination to not go over time/size limits.
-   * @return {Agreement[]}
+   * @notice Get the number of accepted agreements.
+   * @return {uint256}
    */
-  function getAcceptedAgreements() public view returns (Agreement[] memory) {
+  function getAcceptedAgreementCount() public view returns (uint256) {
     uint256 acceptedCount = 0;
 
     for (uint256 i = 0; i < getAgreementCount(); i++) {
@@ -172,6 +178,18 @@ contract MarrySign {
 
       acceptedCount++;
     }
+
+    return acceptedCount;
+  }
+
+  /**
+   * @notice Get accepted agreements.
+   * @dev @todo: Optimize : there are two similar loops.
+   * @dev @todo: Add pagination to not go over time/size limits.
+   * @return {Agreement[]}
+   */
+  function getAcceptedAgreements() public view returns (Agreement[] memory) {
+    uint256 acceptedCount = getAcceptedAgreementCount();
 
     Agreement[] memory acceptedAgreements = new Agreement[](acceptedCount);
 
@@ -342,11 +360,11 @@ contract MarrySign {
   }
 
   /*
-   * @notice Set our fee.
-   * @param newFee {uint256} Our fee in Wei.
+   * @notice Set service fee.
+   * @param _fee {uint256} Our fee in Wei.
    */
-  function setFee(uint256 newFee) public onlyOwner {
-    fee = newFee;
+  function setFee(uint256 _fee) public onlyOwner {
+    fee = _fee;
   }
 
   /**

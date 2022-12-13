@@ -1,18 +1,14 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
-import { BytesLike } from 'ethers'
+import { BigNumber, BytesLike } from 'ethers'
 import { ethers } from 'hardhat'
 import { deployContracts } from '../lib/deploy'
 import { MarrySign } from '../typechain'
 import { EAgreementEventName } from '../types/EAgreementEventName'
 import { EAgreementState } from '../types/EAgreementState'
 import { ECustomContractError } from '../types/ECustomContractError'
-import {
-  nowTimestamp,
-  stringToHex,
-  terminationServiceFee,
-} from './utils/helpers'
+import { nowTimestamp, stringToHex } from './utils/helpers'
 
 describe('MarrySign', () => {
   let contract: MarrySign
@@ -20,9 +16,8 @@ describe('MarrySign', () => {
   let alice: SignerWithAddress
   let bob: SignerWithAddress
 
-  const terminationCost = ethers.utils.parseEther('0.00001')
-  const serviceFeePercent = 10 // Have to hardcode it here for now.
-  const serviceFee = terminationServiceFee(terminationCost, serviceFeePercent)
+  const terminationCost = ethers.utils.parseEther('0.001')
+  const serviceFee = ethers.utils.parseEther('0.00001')
 
   beforeEach(async () => {
     const results = await loadFixture(deployContracts)
@@ -35,10 +30,18 @@ describe('MarrySign', () => {
     return results
   })
 
+  const _getFee = async () => {
+    return await contract.connect(owner).getFee()
+  }
+  const _setFee = async (fee: BigNumber) => {
+    return await contract.connect(owner).setFee(fee)
+  }
+
   const _createAgreement = async (
     contract: MarrySign,
     alice: SignerWithAddress,
-    bob: SignerWithAddress
+    bob: SignerWithAddress,
+    serviceFee: BigNumber = BigNumber.from('0')
   ) => {
     const createdAt = nowTimestamp()
     const agreementData = {
@@ -53,7 +56,6 @@ describe('MarrySign', () => {
 
     const content = stringToHex(JSON.stringify(agreementData))
 
-    // Capture agreement index in case a few contracts created one by one.
     let capturedId: BytesLike = ethers.utils.hexZeroPad(
       ethers.utils.hexlify(0),
       32
@@ -63,13 +65,18 @@ describe('MarrySign', () => {
       return true
     }
 
+    await _setFee(serviceFee)
+
     await expect(
       contract
         .connect(alice)
-        .createAgreement(bob.address, content, terminationCost, createdAt)
+        .createAgreement(bob.address, content, terminationCost, createdAt, {
+          value: serviceFee,
+        })
     )
       .to.emit(contract, EAgreementEventName.AgreementCreated)
       .withArgs(captureId)
+      .to.changeEtherBalances([alice, owner], [-serviceFee, serviceFee])
 
     const agreement = await contract.callStatic.getAgreement(capturedId)
     expect(agreement.alice).to.be.equal(alice.address)
@@ -81,6 +88,25 @@ describe('MarrySign', () => {
 
     return agreement
   }
+
+  describe('Contract: Fee', () => {
+    it('Should revert if called by not the owner', async () => {
+      await expect(
+        contract.connect(alice).setFee(serviceFee)
+      ).to.be.revertedWithCustomError(
+        contract,
+        ECustomContractError.CallerIsNotOwner
+      )
+    })
+
+    it('Should set the correct fee', async () => {
+      await _setFee(serviceFee)
+
+      const actualFee = await _getFee()
+
+      expect(serviceFee.eq(actualFee)).to.be.true
+    })
+  })
 
   describe('Agreement: Getters', () => {
     it('Should revert if the passed ID does not exist', async () => {
@@ -161,7 +187,7 @@ describe('MarrySign', () => {
   describe('Agreement: Creation', () => {
     it('Should revert if parameters are invalid', async () => {
       let content = stringToHex('Test vow')
-      let terminationCost = 100
+      let terminationCost: BigNumber = ethers.utils.parseEther('0.05')
       let createdAt = 0
 
       await expect(
@@ -174,7 +200,7 @@ describe('MarrySign', () => {
       )
 
       content = stringToHex('')
-      terminationCost = 100
+      terminationCost = ethers.utils.parseEther('0.05')
       createdAt = nowTimestamp()
 
       await expect(
@@ -187,7 +213,7 @@ describe('MarrySign', () => {
       )
 
       content = stringToHex('Test vow')
-      terminationCost = 0
+      terminationCost = BigNumber.from('0')
       createdAt = nowTimestamp()
 
       await expect(
@@ -198,10 +224,34 @@ describe('MarrySign', () => {
         contract,
         ECustomContractError.ZeroTerminationCost
       )
+
+      // If the amaunt sent is not the same as our fee.
+
+      content = stringToHex('Test vow')
+      terminationCost = ethers.utils.parseEther('0.05')
+      createdAt = nowTimestamp()
+
+      await expect(
+        contract
+          .connect(alice)
+          .createAgreement(bob.address, content, terminationCost, createdAt, {
+            value: serviceFee.sub(ethers.utils.parseEther('0.000001')), // something not equivalent to our serviceFee.
+          })
+      ).to.be.revertedWithCustomError(
+        contract,
+        ECustomContractError.MustPayExactFee
+      )
     })
 
     it('Should create an agreement and emit event for correct parameters', async () => {
       await _createAgreement(contract, alice, bob)
+
+      const count = await contract.callStatic.getAgreementCount()
+      expect(count).to.be.equal(1)
+    })
+
+    it('Should create an agreement and pay our fee', async () => {
+      await _createAgreement(contract, alice, bob, serviceFee)
 
       const count = await contract.callStatic.getAgreementCount()
       expect(count).to.be.equal(1)
@@ -239,6 +289,22 @@ describe('MarrySign', () => {
       ).to.be.revertedWithCustomError(
         contract,
         ECustomContractError.AgreementNotFound
+      )
+    })
+
+    it('Should revert if the sent amount is not the same as our fee', async () => {
+      const { id } = await _createAgreement(contract, alice, bob)
+
+      await _setFee(serviceFee)
+
+      const acceptedAt = nowTimestamp()
+      await expect(
+        contract.connect(bob).acceptAgreement(id, acceptedAt, {
+          value: serviceFee.sub(ethers.utils.parseEther('0.000001')), // something not equivalent to our serviceFee.
+        })
+      ).to.be.revertedWithCustomError(
+        contract,
+        ECustomContractError.MustPayExactFee
       )
     })
 
@@ -329,7 +395,7 @@ describe('MarrySign', () => {
       )
     })
 
-    it('Bob should be able to terminate an agreement with penalty', async () => {
+    it('Bob should be able to terminate an agreement', async () => {
       const { id, terminationCost } = await _createAgreement(
         contract,
         alice,
@@ -344,15 +410,15 @@ describe('MarrySign', () => {
         .to.emit(contract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
-          [bob, alice, owner],
-          [-terminationCost, terminationCost.sub(serviceFee), serviceFee]
+          [bob, alice],
+          [-terminationCost, terminationCost]
         )
 
       const agreement = await contract.callStatic.getAgreement(id)
       expect(agreement.state).to.be.equal(EAgreementState.Terminated)
     })
 
-    it('Alice should be able to terminate an agreement with penalty', async () => {
+    it('Alice should be able to terminate an agreement', async () => {
       const { id, terminationCost } = await _createAgreement(
         contract,
         alice,
@@ -367,8 +433,8 @@ describe('MarrySign', () => {
         .to.emit(contract, EAgreementEventName.AgreementTerminated)
         .withArgs(id)
         .to.changeEtherBalances(
-          [alice, bob, owner],
-          [-terminationCost, terminationCost.sub(serviceFee), serviceFee]
+          [alice, bob],
+          [-terminationCost, terminationCost]
         )
 
       const agreement = await contract.callStatic.getAgreement(id)
