@@ -165,6 +165,42 @@ contract MarrySign {
   }
 
   /**
+   * @notice Get all agreements paginated.
+   * @return {Agreement[]}
+   */
+  function getPaginatedAgreements(
+    uint _pageNum,
+    uint _resultsPerPage
+  ) public view returns (Agreement[] memory) {
+    // Return emptry array if the agreement list is empty or the requested page number is 0.
+    if (agreements.length == 0 || _pageNum == 0) {
+      return new Agreement[](0);
+    }
+
+    uint256 index = _resultsPerPage * _pageNum - _resultsPerPage;
+
+    // Return emptry array if the requested index is out of bounds.
+    if (index < 0 || index > agreements.length - 1) {
+      return new Agreement[](0);
+    }
+
+    Agreement[] memory results = new Agreement[](_resultsPerPage);
+
+    uint256 _returnCounter = 0;
+    for (index; index < _resultsPerPage * _pageNum; index++) {
+      if (index < agreements.length) {
+        results[_returnCounter] = agreements[index];
+      } else {
+        return results;
+      }
+
+      _returnCounter++;
+    }
+
+    return results;
+  }
+
+  /**
    * @notice Get the number of accepted agreements.
    * @return {uint256}
    */

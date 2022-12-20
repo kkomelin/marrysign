@@ -8,7 +8,7 @@ import { MarrySign } from '../typechain'
 import { EAgreementEventName } from '../types/EAgreementEventName'
 import { EAgreementState } from '../types/EAgreementState'
 import { ECustomContractError } from '../types/ECustomContractError'
-import { nowTimestamp, stringToHex } from './utils/helpers'
+import { compareAgreements, nowTimestamp, stringToHex } from './utils/helpers'
 
 describe('MarrySign', () => {
   let contract: MarrySign
@@ -442,7 +442,7 @@ describe('MarrySign', () => {
     })
   })
 
-  describe('Agreement: List of Accepted', () => {
+  describe('Agreement: Lists of Accepted Agreements', () => {
     it('Should return only accepted agreements', async () => {
       await _createAgreement(contract, alice, bob)
       const { id: id2 } = await _createAgreement(contract, alice, bob)
@@ -459,6 +459,71 @@ describe('MarrySign', () => {
       expect(id2).to.be.equal(agreement.id)
       expect(agreement.state).to.be.equal(EAgreementState.Accepted)
       expect(agreement.alice).to.be.equal(alice.address)
+    })
+  })
+
+  describe('Agreement: Lists of Accepted Agreements', () => {
+    it('Should return empty array if there are no agreements', async () => {
+      const page1 = await contract.getPaginatedAgreements(1, 2)
+
+      expect(page1.length).to.be.equal(0)
+    })
+
+    it('Should return empty array if page number is out of bounds', async () => {
+      await _createAgreement(contract, alice, bob)
+
+      let page = await contract.getPaginatedAgreements(0, 2)
+      expect(page.length).to.be.equal(0)
+
+      page = await contract.getPaginatedAgreements(10, 2)
+      expect(page.length).to.be.equal(0)
+    })
+
+    it('Should return correct result if the requested page is not full', async () => {
+      const agreement = await _createAgreement(contract, alice, bob)
+
+      const page = await contract.getPaginatedAgreements(1, 2)
+      expect(page.length).to.be.equal(2)
+      expect(compareAgreements(page[0], agreement)).to.be.true
+      expect(page[1].id).to.be.equal(
+        '0x0000000000000000000000000000000000000000000000000000000000000000'
+      )
+    })
+
+    it('Should return all agreements paginated', async () => {
+      const agreement11 = await _createAgreement(contract, alice, bob)
+      const agreement12 = await _createAgreement(contract, alice, bob)
+      const agreement21 = await _createAgreement(contract, alice, bob)
+
+      const timestamp = nowTimestamp()
+      await contract.connect(alice).refuseAgreement(agreement21.id, timestamp)
+
+      const agreement22 = await _createAgreement(contract, alice, bob)
+      const agreement31 = await _createAgreement(contract, alice, bob)
+      const agreement32 = await _createAgreement(contract, alice, bob)
+
+      const pageSize = 2
+
+      const page1 = await contract.getPaginatedAgreements(1, pageSize)
+      expect(page1.length).to.be.equal(2)
+      expect(compareAgreements(page1[0], agreement11)).to.be.true
+      expect(compareAgreements(page1[1], agreement12)).to.be.true
+
+      const page2 = await contract.getPaginatedAgreements(2, pageSize)
+      expect(page2.length).to.be.equal(2)
+      expect(
+        compareAgreements(page2[0], {
+          ...agreement21,
+          state: EAgreementState.Refused,
+          updatedAt: BigNumber.from(timestamp),
+        })
+      ).to.be.true
+      expect(compareAgreements(page2[1], agreement22)).to.be.true
+
+      const page3 = await contract.getPaginatedAgreements(3, pageSize)
+      expect(page3.length).to.be.equal(2)
+      expect(compareAgreements(page3[0], agreement31)).to.be.true
+      expect(compareAgreements(page3[1], agreement32)).to.be.true
     })
   })
 
