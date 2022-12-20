@@ -1,14 +1,12 @@
 {
   "name": "marrysign",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "network": "hardhat node",
     "compile": "hardhat compile",
     "deploy": "hardhat run --network localhost scripts/deploy.ts",
     "deploy:goerli": "hardhat run --network goerli scripts/deploy.ts",
-    "deploy:mumbai": "hardhat run --network polygonMumbai scripts/deploy.ts",
-    "verify:mumbai": "hardhat verify --network polygonMumbai 0xCce4880C3DAf296d87FE710953E12D008608C6A2 '0x0715A7794a1dc8e42615F059dD6e406A6594651A'",
     "lint": "solhint 'contracts/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "test": "hardhat test",
