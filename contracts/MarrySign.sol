@@ -166,14 +166,16 @@ contract MarrySign {
 
   /**
    * @notice Get all agreements paginated.
+   * @param _pageNum {uint256} A page number, which should be greater than 0.
+   * @param _resultsPerPage {uint256} A number of agreements per page, which should be greater than 0.
    * @return {Agreement[]}
    */
   function getPaginatedAgreements(
-    uint _pageNum,
-    uint _resultsPerPage
+    uint256 _pageNum,
+    uint256 _resultsPerPage
   ) public view returns (Agreement[] memory) {
     // Return emptry array if the agreement list is empty or the requested page number is 0.
-    if (agreements.length == 0 || _pageNum == 0) {
+    if (agreements.length == 0 || _pageNum == 0 || _resultsPerPage == 0) {
       return new Agreement[](0);
     }
 

@@ -272,6 +272,27 @@ Get an agreement by an address of one of the partners.
 | ---- | ---- | ----------- |
 | [0] | struct MarrySign.Agreement | {Agreement} |
 
+### getPaginatedAgreements
+
+```solidity
+function getPaginatedAgreements(uint256 _pageNum, uint256 _resultsPerPage) public view returns (struct MarrySign.Agreement[])
+```
+
+Get all agreements paginated.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _pageNum | uint256 | {uint256} A page number, which should be greater than 0. |
+| _resultsPerPage | uint256 | {uint256} A number of agreements per page, which should be greater than 0. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | struct MarrySign.Agreement[] | {Agreement[]} |
+
 ### getAcceptedAgreementCount
 
 ```solidity

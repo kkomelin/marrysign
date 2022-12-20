@@ -479,6 +479,13 @@ describe('MarrySign', () => {
       expect(page.length).to.be.equal(0)
     })
 
+    it('Should return empty array if number of results per page is 0', async () => {
+      await _createAgreement(contract, alice, bob)
+
+      let page = await contract.getPaginatedAgreements(1, 0)
+      expect(page.length).to.be.equal(0)
+    })
+
     it('Should return correct result if the requested page is not full', async () => {
       const agreement = await _createAgreement(contract, alice, bob)
 
