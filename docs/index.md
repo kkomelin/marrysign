@@ -52,14 +52,6 @@ error EmptyContent()
 
 _Agreement.content cannot be empty._
 
-### ZeroTerminationCost
-
-```solidity
-error ZeroTerminationCost()
-```
-
-_We don't allow zero termination cost._
-
 ### BobNotSpecified
 
 ```solidity

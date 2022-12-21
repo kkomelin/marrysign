@@ -26,7 +26,7 @@ contract MarrySign {
     address bob;
     /// @dev Vow text.
     bytes content;
-    /// @dev A penalty which the one pays for agreement termination (in Wei).
+    /// @dev A penalty which the terminating partner pays for agreement termination (in Wei).
     uint256 terminationCost;
     /// @dev Agreement status.
     AgreementState state;
@@ -46,8 +46,6 @@ contract MarrySign {
   error CallerIsNotOwner();
   /// @dev Agreement.content cannot be empty.
   error EmptyContent();
-  /// @dev We don't allow zero termination cost.
-  error ZeroTerminationCost();
   /// @dev When Bob is not set.
   error BobNotSpecified();
   /// @dev We use it to check Agreement's createdAt, updatedAt, etc. timestamps.
@@ -263,9 +261,6 @@ contract MarrySign {
     if (bob == address(0)) {
       revert BobNotSpecified();
     }
-    if (terminationCost == 0) {
-      revert ZeroTerminationCost();
-    }
 
     // Make sure the sent amount is the same as our fee value.
     if (msg.value != fee) {
@@ -373,13 +368,15 @@ contract MarrySign {
       revert MustPayExactTerminationCost();
     }
 
-    // Pay compensation to the opposite partner.
-    if (agreement.alice == msg.sender) {
-      // Alice pays Bob the compensation.
-      payable(agreement.bob).transfer(msg.value);
-    } else {
-      // Bob pays Alice the compensation.
-      payable(agreement.alice).transfer(msg.value);
+    if (agreement.terminationCost != 0) {
+      // Pay compensation to the opposite partner.
+      if (agreement.alice == msg.sender) {
+        // Alice pays Bob the compensation.
+        payable(agreement.bob).transfer(msg.value);
+      } else {
+        // Bob pays Alice the compensation.
+        payable(agreement.alice).transfer(msg.value);
+      }
     }
 
     delete agreements[pointers[id].index];

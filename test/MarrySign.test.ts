@@ -185,6 +185,18 @@ describe('MarrySign', () => {
   })
 
   describe('Agreement: Creation', () => {
+    it('Should not revert if the termination cost is 0', async () => {
+      const content = stringToHex('Test vow')
+      const terminationCost = BigNumber.from('0')
+      const createdAt = nowTimestamp()
+
+      await expect(
+        contract
+          .connect(alice)
+          .createAgreement(bob.address, content, terminationCost, createdAt)
+      ).to.be.not.reverted
+    })
+
     it('Should revert if parameters are invalid', async () => {
       let content = stringToHex('Test vow')
       let terminationCost: BigNumber = ethers.utils.parseEther('0.05')
@@ -210,19 +222,6 @@ describe('MarrySign', () => {
       ).to.be.revertedWithCustomError(
         contract,
         ECustomContractError.EmptyContent
-      )
-
-      content = stringToHex('Test vow')
-      terminationCost = BigNumber.from('0')
-      createdAt = nowTimestamp()
-
-      await expect(
-        contract
-          .connect(alice)
-          .createAgreement(bob.address, content, terminationCost, createdAt)
-      ).to.be.revertedWithCustomError(
-        contract,
-        ECustomContractError.ZeroTerminationCost
       )
 
       // If the amaunt sent is not the same as our fee.
