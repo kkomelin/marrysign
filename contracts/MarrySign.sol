@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import '@openzeppelin/contracts/security/Pausable.sol';
+
 // import "hardhat/console.sol";
 
 /**
  * @title MarrySign allows a couple to give their marital vows to each other digitally.
  */
-contract MarrySign {
+contract MarrySign is Pausable {
   enum AgreementState {
     Created,
     Accepted,
@@ -98,7 +100,7 @@ contract MarrySign {
    * @notice Contract constructor.
    */
   constructor() payable {
-    owner = payable(msg.sender);
+    owner = payable(_msgSender());
   }
 
   /*
@@ -275,8 +277,10 @@ contract MarrySign {
     // Every agreement gets its own randomFactor to make sure all agreements have unique IDs.
     randomFactor++;
 
+    address sender = _msgSender();
+
     bytes32 id = generateAgreementId(
-      msg.sender,
+      sender,
       bob,
       content,
       terminationCost,
@@ -285,7 +289,7 @@ contract MarrySign {
 
     Agreement memory agreement = Agreement(
       id,
-      msg.sender,
+      sender,
       bob,
       content,
       terminationCost,
@@ -311,7 +315,7 @@ contract MarrySign {
   ) public payable validTimestamp(acceptedAt) {
     Agreement memory agreement = getAgreement(id);
 
-    if (msg.sender != agreement.bob) {
+    if (_msgSender() != agreement.bob) {
       revert AccessDenied();
     }
 
@@ -342,7 +346,9 @@ contract MarrySign {
   ) public validTimestamp(refusedAt) {
     Agreement memory agreement = getAgreement(id);
 
-    if (agreement.bob != msg.sender && agreement.alice != msg.sender) {
+    address sender = _msgSender();
+
+    if (agreement.bob != sender && agreement.alice != sender) {
       revert AccessDenied();
     }
 
@@ -359,7 +365,9 @@ contract MarrySign {
   function terminateAgreement(bytes32 id) public payable {
     Agreement memory agreement = getAgreement(id);
 
-    if (agreement.bob != msg.sender && agreement.alice != msg.sender) {
+    address sender = _msgSender();
+
+    if (agreement.bob != sender && agreement.alice != sender) {
       revert AccessDenied();
     }
 
@@ -370,7 +378,7 @@ contract MarrySign {
 
     if (agreement.terminationCost != 0) {
       // Pay compensation to the opposite partner.
-      if (agreement.alice == msg.sender) {
+      if (agreement.alice == sender) {
         // Alice pays Bob the compensation.
         payable(agreement.bob).transfer(msg.value);
       } else {
@@ -441,7 +449,7 @@ contract MarrySign {
    * @notice Check whether the caller is the contract-owner.
    */
   modifier onlyOwner() {
-    if (msg.sender != owner) {
+    if (_msgSender() != owner) {
       revert CallerIsNotOwner();
     }
     _;
