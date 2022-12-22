@@ -24,9 +24,5 @@
       "type": "string"
     }
   },
-  "required": [
-    "partner1",
-    "partner2",
-    "vow"
-  ]
+  "required": ["partner1", "partner2", "vow"]
 }
