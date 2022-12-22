@@ -1,8 +1,8 @@
 import '@nomicfoundation/hardhat-toolbox'
+import dotenv from 'dotenv'
 import { HardhatUserConfig } from 'hardhat/config'
 import 'solidity-docgen'
-// import { config } from 'dotenv'
-// config()
+dotenv.config()
 
 const MAINNET_RPC_URL =
   process.env.MAINNET_RPC_URL ||
@@ -15,11 +15,8 @@ const GOERLI_RPC_URL =
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || 'Your private account key'
 
-// Your API key for Etherscan, obtain one at https://etherscan.io/
 const ETHERSCAN_API_KEY =
   process.env.ETHERSCAN_API_KEY || 'Your etherscan API key'
-
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || 'https://rpc.sepolia.dev'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
@@ -34,17 +31,12 @@ const config: HardhatUserConfig = {
     },
     goerli: {
       url: GOERLI_RPC_URL,
-      // accounts: PRIVATE_KEY !== undefined ? [`0x${PRIVATE_KEY}`] : [],
+      accounts: PRIVATE_KEY !== undefined ? [`0x${PRIVATE_KEY}`] : [],
       //   accounts: {
       //     mnemonic: MNEMONIC,
       //   },
       chainId: 5,
       // blockConfirmations: 6,
-    },
-    sepolia: {
-      url: SEPOLIA_RPC_URL,
-      // accounts: PRIVATE_KEY !== undefined ? [`0x${PRIVATE_KEY}`] : [],
-      chainId: 11155111,
     },
     mainnet: {
       url: MAINNET_RPC_URL,
