@@ -351,7 +351,7 @@ contract MarrySign {
   }
 
   /*
-   * @notice Terminate an agreement by either either Alice or Bob (involves paying compensation and service fee).
+   * @notice Terminate an agreement by either Alice or Bob and pay compensation (if set).
    * @param id {bytes32} The agreement ID.
    */
   function terminateAgreement(bytes32 id) public payable {
