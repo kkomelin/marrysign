@@ -8,6 +8,7 @@
     "deploy": "hardhat run --network localhost scripts/deploy.ts",
     "deploy:goerli": "hardhat run --network goerli scripts/deploy.ts",
     "verify:goerli": "yarn hardhat verify --network goerli 0x5065FF0a95B08C6f14a2B8ceBdFDe5627022F0a0",
+    "deploy:mainnet": "hardhat run --network mainnet scripts/deploy.ts",
     "lint": "solhint 'contracts/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "test": "hardhat test",

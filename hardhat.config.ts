@@ -15,8 +15,11 @@ const GOERLI_RPC_URL =
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || 'Your private account key'
 
-const ETHERSCAN_API_KEY =
-  process.env.ETHERSCAN_API_KEY || 'Your etherscan API key'
+const ETHERSCAN_GOERLI_API_KEY =
+  process.env.ETHERSCAN_GOERLI_API_KEY || 'Your etherscan API key'
+
+const ETHERSCAN_MAINNET_API_KEY =
+  process.env.ETHERSCAN_MAINNET_API_KEY || 'Your etherscan API key'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
@@ -50,7 +53,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
     apiKey: {
-      goerli: ETHERSCAN_API_KEY,
+      goerli: ETHERSCAN_GOERLI_API_KEY,
+      mainnet: ETHERSCAN_MAINNET_API_KEY,
     },
   },
 }
