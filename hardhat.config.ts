@@ -40,7 +40,7 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: MAINNET_RPC_URL,
-      // accounts: PRIVATE_KEY !== undefined ? [`0x${PRIVATE_KEY}`] : [],
+      accounts: PRIVATE_KEY !== undefined ? [`0x${PRIVATE_KEY}`] : [],
       //   accounts: {
       //     mnemonic: MNEMONIC,
       //   },

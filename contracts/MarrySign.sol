@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 /**
- * @title MarrySign allows a couple to give their marital vows to each other digitally.
+ * @title MarrySign empowers a couple to get crypto-married.
  */
 contract MarrySign {
   enum AgreementState {
