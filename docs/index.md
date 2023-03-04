@@ -156,46 +156,6 @@ Is emitted when the agreement is terminated by any party.
 | ---- | ---- | ----------- |
 | id | bytes32 | {bytes32} The terminated agreement ID. |
 
-### owner
-
-```solidity
-address payable owner
-```
-
-_The contract owner._
-
-### fee
-
-```solidity
-uint256 fee
-```
-
-_Our fee in Wei. 0 by default._
-
-### agreements
-
-```solidity
-struct MarrySign.Agreement[] agreements
-```
-
-_List of all agreements created._
-
-### pointers
-
-```solidity
-mapping(bytes32 => struct MarrySign.Pointer) pointers
-```
-
-_Maps Agreement.id to Agreement index for easier navigation._
-
-### randomFactor
-
-```solidity
-uint256 randomFactor
-```
-
-_Used for making Agreement.IDs trully unique._
-
 ### constructor
 
 ```solidity
@@ -362,14 +322,6 @@ function withdraw() public
 ```solidity
 function setFee(uint256 _fee) public
 ```
-
-### generateAgreementId
-
-```solidity
-function generateAgreementId(address alice, address bob, bytes content, uint256 terminationCost, uint256 randomFactorParam) private pure returns (bytes32)
-```
-
-Generate agreement hash which is used as its ID.
 
 ### validTimestamp
 
